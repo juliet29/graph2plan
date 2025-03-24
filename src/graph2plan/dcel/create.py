@@ -7,123 +7,120 @@ from .interfaces import Edge, Edges
 from .examples import deberg
 from typing import Iterable
 from icecream import ic
-
+import colored_traceback
 
 VertexPositions = dict[int, tuple[int, int]]
 
 
-def flip_edge(edge: tuple[int, int]):
-    a, b = edge
-    return (b, a)
+# def flip_edge(edge: tuple[int, int]):
+#     a, b = edge
+#     return (b, a)
 
 
 def transform_graph_egdes(G: nx.Graph):
-    edges = [Edge(e[0], e[1], ix, 1) for ix, e in enumerate(G.edges)]
-    flipped_edges = [Edge(e[1], e[0], ix, 2) for ix, e in enumerate(G.edges)]
+    ix=0
+    all_edges = []
+    for e in G.edges:
+        all_edges.append(Edge(e[0], e[1], ix, 1))
+        ix+=1
+        all_edges.append(Edge(e[1], e[0], ix, 2))
+        ix+=1
 
-    return Edges(edges + flipped_edges)
+    # edges = [Edge(e[0], e[1], ix, 1) for ix, e in enumerate(G.edges)]
+    # flipped_edges = [Edge(e[1], e[0], ix, 2) for ix, e in enumerate(G.edges)]
+
+    return Edges(all_edges)
 
 
 def set_difference(a: Iterable, b: Iterable):
     return list(set(a).difference(set(b)))
 
 
+def create_line(edge: Edge, pos: VertexPositions):
+    return Line(pos[edge.u], pos[edge.v])
+
+
 # @functools.lru_cache()
 def compute_angle_between_edges(edge1: Edge, edge2: Edge, pos: VertexPositions):
-    print(edge1, edge2)
+    assert edge1.u == edge2.u, "Assuming lines originate at same point"
 
-    def create_line(edge: Edge):
-        return Line(pos[edge.u], pos[edge.v])
-
-    if edge1.u == edge2.u:
-        l1, l2 = [create_line(e) for e in [edge1, edge2]]
-
-        assert l1
-
-        return l1.angle_between(l2)
+    l1, l2 = [create_line(e, pos) for e in [edge1, edge2]]
+    assert l1
+    return l1.smallest_angle_between(l2)
 
 
-def create_embedding(G: nx.Graph):
 
-    def add_half_edges(vertex: int):
-        nbs: list[int] = list(nx.neighbors(G, vertex))
-        if len(nbs) == 1:
-            print(f"1 nb only - edge is ({vertex, nbs[0]})")
-            if (vertex, nbs[0]) in marked_edges:
-                return
-            PG.add_half_edge(vertex, nbs[0])  # e11
-            marked_edges.append((vertex, nbs[0]))
-            return
-
-        for nb in nbs:
-            if (vertex, nb) in marked_edges:
-                return
-            angles = []
-            other_nbs = set_difference(nbs, [nb])
-            print(f"curr edge{(vertex, nb)}. other nbs: {other_nbs}")
-
-            if len(other_nbs) == 1:
-                print(f"2 nb only - edge is ({vertex, nb})")
-
-                try:
-                    PG.add_half_edge(vertex, nb, cw=other_nbs[0])
-                except NetworkXError:
-                    PG.add_half_edge(vertex, nb)
-                marked_edges.append((vertex, nb))
-                return
-            for ix, other in enumerate(other_nbs):
-
-                angle = compute_angle_between_edges(
-                    edges.get(vertex, nb), edges.get(vertex, other), pos
-                )
-                angles.append(angle)
-            ix_of_smallest = angles.index(min(angles))
-            closest_nb = other_nbs[ix_of_smallest]
-            print(f"closest nb of {(vertex, nb)} is {closest_nb}")
-            try:
-                PG.add_half_edge(vertex, nb, cw=closest_nb)
-            except NetworkXError:
-                PG.add_half_edge(vertex, nb)
-
-            marked_edges.append((vertex, nb))
-            return
-
-    PG = nx.PlanarEmbedding()
-    G, pos = deberg()
-    edges = transform_graph_egdes(G)
-    # iterate over nodes..
-
-    marked_edges = []
-
-    for edge in edges.edges:
-        if (edge.u, edge.v) not in marked_edges:
-            print(f"\ncandidate edge {(edge.u, edge.v) }")
-            add_half_edges(edge.u)
-        print(f"marked edges: {marked_edges}")
-
-    return PG
+def assess_cw(edge1: Edge, edge2: Edge, pos: VertexPositions):
+    l1, l2 = [create_line(e, pos) for e in [edge1, edge2]]
+    assert l1
+    print(l1.points)
 
 
-def order_edges(vertex=3, nb=4):
-    G, pos = deberg()
-    # G.add_edges_from([(3,4), (3,1), (3,2)])
-    edge_list = transform_graph_egdes(G)
+def test_cw()
 
+
+
+def get_closest_nb(edge_list: Edges, pos: VertexPositions, vertex=3, nb=4) -> Edge | None:
     # all relevant edges..
     star = [edge for edge in edge_list.edges if edge.u == vertex]
-    print(star)
     ref_edge = edge_list.get(vertex, nb)
-    print(ref_edge)
+    assert ref_edge
+
+    # print(ref_edge)
     filtered_star = [e for e in star if e.v != nb]
 
-    # for edge in star:
-    #     angle_rad = compute_angle_between_edges(ref_edge, edge, pos)
-    #     print(f"angle btwn {ref_edge.pair}  and {edge.pair} == {angle_rad}")
+    if not filtered_star:
+        return None
+    
+    assert filtered_star
+    assert pos
 
     sedges = sorted(
         filtered_star, key=lambda x: compute_angle_between_edges(ref_edge, x, pos)
     )
     return sedges[0]
+
+def order_edges(vertex=3, nb=4):
+    G, pos = deberg()
+    edge_list = transform_graph_egdes(G)
+
+    PG = nx.PlanarEmbedding()
+
+    for e in edge_list.edges:
+        if e.u not in PG.nodes and e.v not in PG.nodes: 
+            print(f"u, v not yet considered {e.pair}")
+            PG.add_half_edge(e.u, e.v)
+        elif e.u in PG.nodes and  not list(PG.successors(e.u)):
+            print(f"u {e.u} has no succesors!")
+            PG.add_half_edge(e.u, e.v)
+        
+        else:
+            closest = get_closest_nb(edge_list, pos,  e.u, e.v)
+            if not closest: 
+                print(f"edge: {e.u, e.v} |  None")
+                PG.add_half_edge(e.u, e.v)
+            else: 
+                print(f"edge: {e.u, e.v} |  {closest.pair} | u succesors: {list(PG.successors(e.u))}")
+                if closest.v not in PG.nodes:
+                    print("closest not in PG")
+                    PG.add_half_edge(e.u, e.v)
+                else: 
+                    PG.add_half_edge(e.u, e.v, ccw=closest.v)
+                    # try: 
+                    #     PG.add_half_edge(e.u, e.v, cw=closest.v)
+                    # except NetworkXError:
+                    #     PG.add_half_edge(e.u, e.v, ccw=closest.v)
+        print(f"Updated edges: {PG.edges}\n" )
+    # except NetworkXError as n:
+    #     nx.draw_networkx(PG.to_directed(), pos)
+    #     print(n)
+
+    for node in PG.nodes:
+        print(f"node {node}: {list(PG.neighbors_cw_order(node))}")
+
+    return PG
+
+                
 
 
 def test():
@@ -132,6 +129,7 @@ def test():
     edges = transform_graph_egdes(G)
     # print(edges.get(1,2))
     # print(edges.get(2,1))
+    PG = nx.PlanarEmbedding()
 
     angle_rad = compute_angle_between_edges(edges.get(3, 4), edges.get(3, 1), pos)
     print(angle_rad)
