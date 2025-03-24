@@ -1,3 +1,4 @@
+import networkx as nx
 from dataclasses import dataclass
 from typing import NamedTuple, Literal
 
@@ -13,19 +14,38 @@ class Coordinate:
 class Edge:
     u: int
     v: int
-    number: int
+    ix: int
     pair_num: Literal[1,2]
+    # marked=False
 
+    @property
     def name(self):
-        return f"e{self.number},{self.pair_num}"
+        return f"e{self.ix},{self.pair_num}"
+    @property
+    def pair(self):
+        return (self.u, self.v)
+    
+@dataclass
+class Edges:
+    edges: list[Edge]
+
+    def get(self, u:int,v:int):
+        matches = [i for i in self.edges if i.u == u and i.v == v]
+        assert len(matches) == 1
+        return matches[0]
+    
+# TODO move to utils.. 
+
+    
+
 
 
 class Face(NamedTuple):
-    number: int
+    ix: int
 
 
 class Vertex(NamedTuple):
-    number: int
+    ix: int
 
 
 
