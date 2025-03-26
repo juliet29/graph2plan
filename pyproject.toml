@@ -1,0 +1,28 @@
+[project]
+name = "graph2plan"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Juliet Nwagwu Ume-Ezeoke", email = "jnwagwu@stanford.edu" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "altair>=5.5.0",
+    "colored-traceback>=0.4.2",
+    "icecream>=2.1.4",
+    "ipykernel>=6.29.5",
+    "matplotlib>=3.10.1",
+    "networkx>=3.4.2",
+    "pyprojroot>=0.3.0",
+    "pytest>=8.3.5",
+    "sympy>=1.13.3",
+    "types-networkx>=3.4.2.20250319",
+]
+
+[project.scripts]
+graph2plan = "graph2plan:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

@@ -2,7 +2,7 @@ from os import close
 import networkx as nx
 import functools
 from networkx import NetworkXError
-from sympy import Point, Line, pi
+from sympy import Point, Line, pi, Triangle
 from .interfaces import Edge, Edges
 from .examples import deberg
 from typing import Iterable
@@ -18,13 +18,13 @@ VertexPositions = dict[int, tuple[int, int]]
 
 
 def transform_graph_egdes(G: nx.Graph):
-    ix=0
+    ix = 0
     all_edges = []
     for e in G.edges:
         all_edges.append(Edge(e[0], e[1], ix, 1))
-        ix+=1
+        ix += 1
         all_edges.append(Edge(e[1], e[0], ix, 2))
-        ix+=1
+        ix += 1
 
     # edges = [Edge(e[0], e[1], ix, 1) for ix, e in enumerate(G.edges)]
     # flipped_edges = [Edge(e[1], e[0], ix, 2) for ix, e in enumerate(G.edges)]
@@ -49,18 +49,38 @@ def compute_angle_between_edges(edge1: Edge, edge2: Edge, pos: VertexPositions):
     return l1.smallest_angle_between(l2)
 
 
-
-def assess_cw(edge1: Edge, edge2: Edge, pos: VertexPositions):
+def is_cw(edge1: Edge, edge2: Edge, pos: VertexPositions):
     l1, l2 = [create_line(e, pos) for e in [edge1, edge2]]
     assert l1
-    print(l1.points)
+    assert l2
+    # print(l1.points)
+    # print(l2.points)
+    # triangle = Triangle(Point(0, 0), Point(4, 0), Point(4, 3))
+    triangle = Triangle(*l1.points, l2.points[1])
+    # print(f"{triangle} --- Area: {triangle.area}")
+    return True if triangle.area < 0 else False
+
+    return triangle
 
 
-def test_cw()
+def test_cw():
+    G, pos = deberg()
+    edge_list = transform_graph_egdes(G)
+    e_base = (3, 1)
+    e_cw = (3, 2)
+    e_ccw = (3, 4)
+    print(f"CW:{e_base} -> {e_cw}")
+    t1 = is_cw(edge_list.get(*e_base), edge_list.get(*e_cw), pos)
+
+    print(f"\nCCW:{e_base} -> {e_ccw}")
+    t2 = is_cw(edge_list.get(*e_base), edge_list.get(*e_ccw), pos)
+
+    return t1, t2
 
 
-
-def get_closest_nb(edge_list: Edges, pos: VertexPositions, vertex=3, nb=4) -> Edge | None:
+def get_closest_nb(
+    edge_list: Edges, pos: VertexPositions, vertex=3, nb=4
+) -> Edge | None:
     # all relevant edges..
     star = [edge for edge in edge_list.edges if edge.u == vertex]
     ref_edge = edge_list.get(vertex, nb)
@@ -71,7 +91,7 @@ def get_closest_nb(edge_list: Edges, pos: VertexPositions, vertex=3, nb=4) -> Ed
 
     if not filtered_star:
         return None
-    
+
     assert filtered_star
     assert pos
 
@@ -80,37 +100,44 @@ def get_closest_nb(edge_list: Edges, pos: VertexPositions, vertex=3, nb=4) -> Ed
     )
     return sedges[0]
 
-def order_edges(vertex=3, nb=4):
-    G, pos = deberg()
+
+def create_embedding(G: nx.Graph, pos: VertexPositions):
+    # G, pos = deberg()
     edge_list = transform_graph_egdes(G)
 
     PG = nx.PlanarEmbedding()
 
     for e in edge_list.edges:
-        if e.u not in PG.nodes and e.v not in PG.nodes: 
+        if e.u not in PG.nodes and e.v not in PG.nodes:
             print(f"u, v not yet considered {e.pair}")
             PG.add_half_edge(e.u, e.v)
-        elif e.u in PG.nodes and  not list(PG.successors(e.u)):
+        elif e.u in PG.nodes and not list(PG.successors(e.u)):
             print(f"u {e.u} has no succesors!")
             PG.add_half_edge(e.u, e.v)
-        
+
         else:
-            closest = get_closest_nb(edge_list, pos,  e.u, e.v)
-            if not closest: 
+            closest = get_closest_nb(edge_list, pos, e.u, e.v)
+            if not closest:
                 print(f"edge: {e.u, e.v} |  None")
                 PG.add_half_edge(e.u, e.v)
-            else: 
-                print(f"edge: {e.u, e.v} |  {closest.pair} | u succesors: {list(PG.successors(e.u))}")
+            else:
+                print(
+                    f"edge: {e.u, e.v} |  {closest.pair} | u succesors: {list(PG.successors(e.u))}"
+                )
                 if closest.v not in PG.nodes:
                     print("closest not in PG")
                     PG.add_half_edge(e.u, e.v)
-                else: 
-                    PG.add_half_edge(e.u, e.v, ccw=closest.v)
-                    # try: 
+                else:
+                    cw = is_cw(e, closest, pos)
+                    if cw:
+                        PG.add_half_edge(e.u, e.v, ccw=closest.v)
+                    else:
+                        PG.add_half_edge(e.u, e.v, cw=closest.v)
+                    # try:
                     #     PG.add_half_edge(e.u, e.v, cw=closest.v)
                     # except NetworkXError:
                     #     PG.add_half_edge(e.u, e.v, ccw=closest.v)
-        print(f"Updated edges: {PG.edges}\n" )
+        print(f"Updated edges: {PG.edges}\n")
     # except NetworkXError as n:
     #     nx.draw_networkx(PG.to_directed(), pos)
     #     print(n)
@@ -119,8 +146,6 @@ def order_edges(vertex=3, nb=4):
         print(f"node {node}: {list(PG.neighbors_cw_order(node))}")
 
     return PG
-
-                
 
 
 def test():

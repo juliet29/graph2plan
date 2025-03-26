@@ -16,7 +16,7 @@ def draw_deberg(G: nx.Graph, plot=False):
 
 
 def deberg(plot=False):
-    G = nx.Graph()
+    G:nx.Graph[int] = nx.Graph()
     G.add_edge(1, 2)  # e11
     G.add_edge(3, 4)  # e21
     G.add_edge(3, 1, ccw=4)  # e31
