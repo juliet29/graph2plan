@@ -1,27 +1,11 @@
 import networkx as nx
-from networkx import NetworkXError
 from sympy import Line, Triangle, N
-from .interfaces import Edge, Edges, T
 
-
-VertexPositions = dict[int, tuple[int, int]]
-
-
-# TODO move elsewhere?
-def transform_graph_egdes(G: nx.Graph):
-    ix = 0
-    all_edges = []
-    for e in G.edges:
-        all_edges.append(Edge(e[0], e[1], ix, 1))
-        ix += 1
-        all_edges.append(Edge(e[1], e[0], ix, 2))
-        ix += 1
-
-    return Edges(all_edges)
+from graph2plan.dcel.interfaces import VertexPositions, transform_graph_egdes
+from .interfaces import Edge, T
 
 
 def create_line(edge: Edge, pos: VertexPositions):
-    # print(f"edge in create line: {edge}")
     return Line(pos[edge.u], pos[edge.v])
 
 
@@ -32,11 +16,7 @@ def compute_angle_between_edges(edge1: Edge, edge2: Edge, pos: VertexPositions):
 
     l1, l2 = [create_line(e, pos) for e in [edge1, edge2]]
     assert l1
-    small_angle = l1.smallest_angle_between(l2)
     angle = l1.angle_between(l2)
-    print(
-        f"edge: {edge1.pair, edge2.pair} -- small_angle: {small_angle}, angle: {angle}"
-    )
     return N(angle)
 
 
@@ -48,7 +28,6 @@ def is_cw(pos: VertexPositions, edge1: Edge, edge2: Edge):
         base = l1.points[0]
         other = l2.points[1]
         above = True if base.compare(other) == 1 else False
-        # print(f"base:{l1}, other:{l2}, above?: {above}")
         return not above
     triangle = Triangle(*l1.points, l2.points[1])
     try:
@@ -72,7 +51,6 @@ def get_closest_successor(
 def add_edge_with_reference(
     pos: VertexPositions, PG: nx.PlanarEmbedding, e: Edge[T], reference: Edge[T]
 ):
-    # print(f"ref in add edge w ref {reference}")
     cw_value = is_cw(pos, e, reference)
     if cw_value:
         PG.add_half_edge_ccw(e.u, e.v, reference_neighbor=reference.v)
