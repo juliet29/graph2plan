@@ -34,7 +34,9 @@ def compute_angle_between_edges(edge1: Edge, edge2: Edge, pos: VertexPositions):
     assert l1
     small_angle = l1.smallest_angle_between(l2)
     angle = l1.angle_between(l2)
-    print(f"edge: {edge1.pair, edge2.pair} -- small_angle: {small_angle}, angle: {angle}")
+    print(
+        f"edge: {edge1.pair, edge2.pair} -- small_angle: {small_angle}, angle: {angle}"
+    )
     return N(angle)
 
 
@@ -80,7 +82,7 @@ def add_edge_with_reference(
     return PG
 
 
-def create_embedding_simple(G: nx.Graph, pos: VertexPositions):
+def create_embedding(G: nx.Graph, pos: VertexPositions):
     edge_list = transform_graph_egdes(G)
     PG = nx.PlanarEmbedding()
 
@@ -111,6 +113,8 @@ def create_embedding_simple(G: nx.Graph, pos: VertexPositions):
     for e in edge_list.edges:
         val = handle_half_edge(e)
         if val == 4:
-            print(f"edge: {e.pair}, type: {val}, curr_nbs: {list(PG.neighbors_cw_order(e.u))}")
+            print(
+                f"edge: {e.pair}, type: {val}, curr_nbs: {list(PG.neighbors_cw_order(e.u))}"
+            )
 
     return PG

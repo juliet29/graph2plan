@@ -33,11 +33,10 @@ def test_cw():
     e_ccw = (3, 4)
 
 
-    t1 = is_cw(edge_list.get(*e_base), edge_list.get(*e_cw), pos)
-    t2 = is_cw(edge_list.get(*e_base), edge_list.get(*e_ccw), pos)
+    t1 = is_cw(pos, edge_list.get(*e_base), edge_list.get(*e_cw))
+    t2 = is_cw(pos, edge_list.get(*e_base), edge_list.get(*e_ccw))
 
     assert t1, t2 == (True, False)
-
 
 
 
@@ -51,9 +50,28 @@ def test_deberg():
     assert known_embedding.traverse_face(4,3) == computed_embedding.traverse_face(4,3)
 
 
+@pytest.mark.parametrize(
+    "G", [nx.grid_2d_graph(2,3), nx.triangular_lattice_graph(2,2)]
+)
+def test_other_graphs_simple_pos(G:nx.Graph):
+    pos = {i:i for i in G.nodes}
+    e = create_embedding(G, pos)
+    assert not e.check_structure() 
 
-def test_2d_grid():
-    H = nx.grid_2d_graph(2,3)
-    pos = {i:i for i in H.nodes}
-    create_embedding(H, pos)
+
+@pytest.mark.parametrize(
+    "G", [nx.hypercube_graph(3)]
+)
+def test_other_graphs_planar_pos(G:nx.Graph):
+    pos = nx.planar_layout(G)
+    e = create_embedding(G, pos)
+    assert not e.check_structure() 
+
+@pytest.mark.parametrize(
+    "G", [nx.hexagonal_lattice_graph(3,4)]
+)
+def test_other_graphs_complex_pos(G:nx.Graph):
+    pos = {i[0]:i[1]["pos"] for i in G.nodes(data=True)}
+    e = create_embedding(G, pos)
+    assert not e.check_structure() 
 
