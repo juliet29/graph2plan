@@ -1,8 +1,9 @@
 import networkx as nx
 from dataclasses import dataclass
-from typing import NamedTuple, Literal
+from typing import Generic, NamedTuple, Literal
+from typing import TypeVar
 
-
+T = TypeVar('T')
 
 
 @dataclass
@@ -11,9 +12,9 @@ class Coordinate:
     y: float
 
 @dataclass
-class Edge:
-    u: int
-    v: int
+class Edge(Generic[T]):
+    u: T
+    v: T
     ix: int
     pair_num: Literal[1,2]
     # marked=False
@@ -26,10 +27,10 @@ class Edge:
         return (self.u, self.v)
     
 @dataclass
-class Edges:
-    edges: list[Edge]
+class Edges(Generic[T]):
+    edges: list[Edge[T]]
 
-    def get(self, u:int,v:int):
+    def get(self, u:T,v:T):
         matches = [i for i in self.edges if i.u == u and i.v == v]
         assert len(matches) == 1
         return matches[0]

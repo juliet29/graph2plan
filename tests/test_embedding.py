@@ -6,6 +6,7 @@ from graph2plan.dcel.create import (
     transform_graph_egdes
 )
 import pytest
+import networkx as nx
 
 
 @pytest.mark.skip(reason="Getting opposite result of what is expected..")
@@ -48,3 +49,11 @@ def test_deberg():
 
     assert known_embedding.traverse_face(1,2) == computed_embedding.traverse_face(1,2)
     assert known_embedding.traverse_face(4,3) == computed_embedding.traverse_face(4,3)
+
+
+
+def test_2d_grid():
+    H = nx.grid_2d_graph(2,3)
+    pos = {i:i for i in H.nodes}
+    create_embedding(H, pos)
+
