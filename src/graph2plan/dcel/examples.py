@@ -1,10 +1,10 @@
 import networkx as nx
 
 
-def plot_embedded_graph(embedding: nx.PlanarEmbedding):
-    pos = nx.combinatorial_embedding_to_pos(embedding)
-    print(pos)
-    nx.draw_networkx(embedding, pos)
+# def plot_embedded_graph(embedding: nx.PlanarEmbedding):
+#     pos = nx.combinatorial_embedding_to_pos(embedding)
+#     print(pos)
+#     nx.draw_networkx(embedding, pos)
 
 
 def draw_deberg(G: nx.Graph, plot=False):

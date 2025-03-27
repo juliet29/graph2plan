@@ -20,6 +20,15 @@ def compute_angle_between_edges(edge1: Edge, edge2: Edge, pos: VertexPositions):
     return N(angle)
 
 
+def get_closest_successor(
+    pos: VertexPositions, curr_edge: Edge[T], succesors: list[Edge[T]]
+) -> Edge[T]:
+    sorted_edges = sorted(
+        succesors, key=lambda x: compute_angle_between_edges(curr_edge, x, pos)
+    )
+    return sorted_edges[0]
+
+
 def is_cw(pos: VertexPositions, edge1: Edge, edge2: Edge):
     l1, l2 = [create_line(e, pos) for e in [edge1, edge2]]
     assert l1
@@ -37,15 +46,6 @@ def is_cw(pos: VertexPositions, edge1: Edge, edge2: Edge):
         raise Exception
 
     return True if triangle.area < 0 else False
-
-
-def get_closest_successor(
-    pos: VertexPositions, curr_edge: Edge[T], succesors: list[Edge[T]]
-) -> Edge[T]:
-    sedges = sorted(
-        succesors, key=lambda x: compute_angle_between_edges(curr_edge, x, pos)
-    )
-    return sedges[0]
 
 
 def add_edge_with_reference(
@@ -81,7 +81,6 @@ def create_embedding(G: nx.Graph, pos: VertexPositions):
             add_edge_with_reference(pos, PG, e, ref)
             return 3
 
-        print(f"\n4 - before_nbs of {e.u}: {list(PG.neighbors_cw_order(e.u))}")
         reference = get_closest_successor(
             pos, e, [edge_list.get(e.u, v) for v in successors]
         )
@@ -89,10 +88,6 @@ def create_embedding(G: nx.Graph, pos: VertexPositions):
         return 4
 
     for e in edge_list.edges:
-        val = handle_half_edge(e)
-        if val == 4:
-            print(
-                f"edge: {e.pair}, type: {val}, curr_nbs: {list(PG.neighbors_cw_order(e.u))}"
-            )
+        handle_half_edge(e)
 
     return PG

@@ -11,6 +11,10 @@ class Coordinate:
     x: float
     y: float
 
+    @property
+    def pair(self):
+        return (self.x, self.y)
+
 
 @dataclass
 class Edge(Generic[T]):

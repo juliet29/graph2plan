@@ -53,19 +53,21 @@ def test_deberg():
 )
 def test_other_graphs_simple_pos(G: nx.Graph):
     pos = {i: i for i in G.nodes}
-    e = create_embedding(G, pos)
-    assert not e.check_structure()
+    PG = create_embedding(G, pos)
+    assert not PG.check_structure()
 
 
-@pytest.mark.parametrize("G", [nx.hypercube_graph(3)])
+@pytest.mark.parametrize("G", [nx.hypercube_graph(3), nx.grid_2d_graph(4, 4)])
 def test_other_graphs_planar_pos(G: nx.Graph):
     pos = nx.planar_layout(G)
-    e = create_embedding(G, pos)
-    assert not e.check_structure()
+    PG = create_embedding(G, pos)
+    assert not PG.check_structure()
 
 
-@pytest.mark.parametrize("G", [nx.hexagonal_lattice_graph(3, 4)])
+@pytest.mark.parametrize(
+    "G", [nx.hexagonal_lattice_graph(3, 4), nx.triangular_lattice_graph(2, 2)]
+)
 def test_other_graphs_complex_pos(G: nx.Graph):
     pos = {i[0]: i[1]["pos"] for i in G.nodes(data=True)}
-    e = create_embedding(G, pos)
-    assert not e.check_structure()
+    PG = create_embedding(G, pos)
+    assert not PG.check_structure()
