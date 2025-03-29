@@ -39,7 +39,6 @@ def assign_pos_w_cardinal(arrs: list[list[T]]):
     return {k: v.pair for k, v in pos.items()}
 
 
-
 def kant_G1():
     l1 = ["i", "e", "c", "h"]
     l2 = ["f", "d", "b"]
@@ -51,13 +50,11 @@ def kant_G1():
     l3_edges = [("f", "a"), ("d", "a"), ("b", "a"), ("b", "g")]
     l4_edges = [(i, "v_n") for i in l3]  # + ["v_w", "v_e"]
 
-
     G = nx.DiGraph()
     G.add_edges_from(l1_edges + l2_edges + l3_edges + l4_edges)  # +  final_edge
 
     # TODO check is st
     return G, assign_pos_w_cardinal(arrs)
-
 
 
 def get_outer_face_st_graph(
@@ -96,7 +93,6 @@ def embed_other_target(_PG: nx.PlanarEmbedding, vertex="v_e"):
     PG.add_half_edge_cw(source, vertex, reference_neighbor=ref)
     PG.add_half_edge_first(vertex, source)
     PG.check_structure()
-    
 
     ref = list(PG.neighbors_cw_order(target))[0]
     PG.add_half_edge_ccw(vertex, target, reference_neighbor=source)
@@ -104,7 +100,7 @@ def embed_other_target(_PG: nx.PlanarEmbedding, vertex="v_e"):
 
     # assert list(PG.neighbors_cw_order(target))[0] == vertex
     PG.check_structure()
-    directed_edges =[ (source, vertex), (vertex, target)]
+    directed_edges = [(source, vertex), (vertex, target)]
     return PG, directed_edges
 
 
@@ -123,7 +119,7 @@ def embed_other_source(_PG: nx.PlanarEmbedding, vertex="v_w"):
     # print(list(PG.neighbors_cw_order(source)))
 
     ref = list(PG.neighbors_cw_order(target))[-1]
-    
+
     PG.add_half_edge_cw(target, vertex, reference_neighbor=ref)
     # print(f"{target} nbs: {list(PG.neighbors_cw_order(target))}")
 
@@ -131,8 +127,9 @@ def embed_other_source(_PG: nx.PlanarEmbedding, vertex="v_w"):
     # print(f"{vertex} nbs: {list(PG.neighbors_cw_order(vertex))}")
 
     PG.check_structure()
-    directed_edges =[ (source, vertex), (vertex, target)]
+    directed_edges = [(source, vertex), (vertex, target)]
     return PG, directed_edges
+
 
 def embed_target_source_edge(_PG: nx.PlanarEmbedding, source="v_s", target="v_n"):
     PG = deepcopy(_PG)
@@ -140,7 +137,6 @@ def embed_target_source_edge(_PG: nx.PlanarEmbedding, source="v_s", target="v_n"
     # print(f"{source} cw: {list(PG.neighbors_cw_order(source))}")
     PG.add_half_edge_ccw(source, target, reference_neighbor=other_source)
     # print(f"{source} cw after: {list(PG.neighbors_cw_order(source))}")
-
 
     # print(f"{target} cw: {list(PG.neighbors_cw_order(target))}")
     PG.add_half_edge_cw(target, source, reference_neighbor=other_source)
@@ -150,13 +146,11 @@ def embed_target_source_edge(_PG: nx.PlanarEmbedding, source="v_s", target="v_n"
     PG.check_structure()
     return PG, directed_edges
 
-
-
     # check outer face, area should be opposite of if traverse other way
 
 
-def complete_kant_G1():
-    # TODO -> need to embed north south.. 
+def embedded_kant_G1():
+    # TODO -> need to embed north south..
     G, pos = kant_G1()
     directed_edges = list(G.edges)
     PG = create_embedding(G, pos)
@@ -168,3 +162,5 @@ def complete_kant_G1():
 
     # PG_complete.check_structure()
     # return PG_complete, pos
+
+
