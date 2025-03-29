@@ -1,17 +1,29 @@
+from ast import Name
+from attr import frozen
 import networkx as nx
+from typing import Generic, Literal, NamedTuple, TypeVar
+
+from networkx import NetworkXException
+from pprint import pprint
+from graph2plan.dcel.interfaces import T, Coordinate, Edge, Edges, Face, CoordinateList, VertexPositions
+from random import uniform
+
 
 def check_num_faces_is_correct(num_nodes, num_half_edges, num_faces):
     # print(f"num_faces: {num_faces}")
-    num_edges = num_half_edges // 2 
+    num_edges = num_half_edges // 2
     expected_faces = num_edges - num_nodes + 2
     try:
         assert num_nodes - num_edges + num_faces == 2
     except AssertionError:
-        print(f"Error! nodes {num_nodes}, edges {num_edges} | faces={num_faces} != exp_faces={expected_faces}")
+        print(
+            f"Error! nodes {num_nodes}, edges {num_edges} | faces={num_faces} != exp_faces={expected_faces}"
+        )
+
+
 def extract_faces(PG: nx.PlanarEmbedding):
     """[Based on networkx source code](https://networkx.org/documentation/stable/_modules/networkx/algorithms/planarity.html#PlanarEmbedding.check_structure)"""
 
-    num_nodes = len(PG.nodes)
     counted_half_edges = set()
     num_faces = 0
     num_half_edges = 0
@@ -26,10 +38,130 @@ def extract_faces(PG: nx.PlanarEmbedding):
                 face = PG.traverse_face(v, w, counted_half_edges)
                 faces[num_faces] = face
                 # print(f"==>> face: {face}")
-    check_num_faces_is_correct(num_nodes, num_half_edges, num_faces)
+    check_num_faces_is_correct(len(PG.nodes), num_half_edges, num_faces)
+    print(num_faces)
     return faces
 
-# TODO check out using e.next_face_half_edge.. 
+
+# TODO check out using e.next_face_half_edge..
 # def extract_faces(PG: nx.PlanarEmbedding):
 
 
+class FacePair(Generic[T], NamedTuple):
+    left: Face[T]
+    right: Face[T]
+
+EdgeFaceDict = dict[tuple[T, T], FacePair[T]]
+
+def prep_dual(PG: nx.PlanarEmbedding, directed_edges:list[tuple[T, T]]) -> EdgeFaceDict[T]:
+    # edges  = Edges([Edge(*i) for  i in list(PG.edges)])
+    # unique_edges = edges.find_unique()
+    edge_face_dict:EdgeFaceDict = {}
+    for e in directed_edges:
+        v,w = e
+        right_face = PG.traverse_face(v, w)
+        left_face = PG.traverse_face(w, v)
+        edge_face_dict[(v, w)] = FacePair(Face(left_face), Face(right_face))
+    return edge_face_dict
+
+class DualVertex(NamedTuple,Generic[T]):
+    ix: int
+    face: Face
+    edge: tuple[T, T]
+    side: Literal["LEFT", "RIGHT"]
+
+    @property
+    def name(self):
+        return f"v_f{self.ix}"
+
+
+
+def create_dual(edge_face_dict: EdgeFaceDict[T], init_graph_pos: VertexPositions[T]):
+    def finish():
+        west_vertex = [vertex for vertex, data in G.nodes(data=True) if data.get("face") == west_face]
+        assert len(west_vertex) == 1
+        west_vertex = west_vertex[0]
+        print(f"==>> west_vertex: {west_vertex}")
+        east_vertex = [vertex for vertex, data in G.nodes(data=True) if data.get("face") == east_face]
+        assert len(east_vertex) == 1
+        east_vertex = east_vertex[0]
+        print(f"==>> east_vertex: {east_vertex}")
+
+
+
+        coords = CoordinateList.to_coordinate_list(pos)
+        delta = 1
+        v = west_vertex
+        name = "w*"
+        nx.relabel_nodes(G, {v:name}, copy=False)
+        pos[name] = (coords.bounds.min_x - delta, coords.mid_values.y)
+        del(pos[v])
+        v = east_vertex
+        name = "e*"
+        nx.relabel_nodes(G, {v:name}, copy=False)
+        pos[name] = (coords.bounds.max_x + delta, coords.mid_values.y)
+        del(pos[v])
+
+    
+    def init_vertex(dual_vertex: DualVertex) -> str:
+        pos[dual_vertex.name] = dual_vertex.face.get_position(init_graph_pos)
+        G.add_node(dual_vertex.name, face=dual_vertex.face, edge=dual_vertex.edge, side=dual_vertex.side)
+        return dual_vertex.name
+
+    def get_or_init_vertex(dual_vertex: DualVertex) -> str:
+        matching_vertices = [vertex for vertex, data in G.nodes(data=True) if data.get("face") == dual_vertex.face]
+
+        if not matching_vertices:
+            return init_vertex(dual_vertex)
+            
+        assert len(matching_vertices) == 1, f"Should only have one matching vertex, instead have: {matching_vertices}"
+        return matching_vertices[0]
+
+
+    G = nx.DiGraph()
+    pos: VertexPositions = {}
+    face_ix = 0
+    source = "v_s"
+    target = "v_n"
+    key_edge = frozenset((source, target))
+
+    # todo could be other way..
+    east_face, west_face = edge_face_dict[source, target]
+
+    
+    for edge, face_pair in edge_face_dict.items():
+        f1 = get_or_init_vertex(DualVertex(face_ix, face_pair.left, edge, "LEFT"))
+        
+        
+        f2 = get_or_init_vertex(DualVertex(face_ix+1, face_pair.right, edge, "RIGHT"))
+
+        if f1 == "v_f2" and f2 == "v_f10":
+            print(f"vf2: {(f1, f2)}")
+            print(f"==>> edge: {edge}")
+            print(f"==>> face_pair.left: {face_pair.left}")
+            print(f"==>> face_pair.right: {face_pair.right}")
+
+        if frozenset(edge) == key_edge:
+            print("st!")
+            G.add_edge(f2,f1)
+        else:
+            G.add_edge(f1,f2)
+
+        face_ix+=1
+
+        # print(seen_edges)
+
+    finish()
+    nx.draw_networkx(G, pos)
+
+    return G, pos
+
+
+
+
+def show_st(G: nx.DiGraph):
+    sources = [x for x in G.nodes() if G.in_degree(x)==0]
+    print(f"==>> sources: {sources}")
+    targets = [x for x in G.nodes() if G.out_degree(x)==0]
+    print(f"==>> targets: {targets}")
+    

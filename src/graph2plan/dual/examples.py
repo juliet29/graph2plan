@@ -1,5 +1,7 @@
 from typing import Literal
 import networkx as nx
+
+from graph2plan.dcel.create import create_embedding
 from ..dcel.interfaces import Coordinate, T, VertexPositions
 from sympy import Polygon
 from copy import deepcopy
@@ -37,6 +39,7 @@ def assign_pos_w_cardinal(arrs: list[list[T]]):
     return {k: v.pair for k, v in pos.items()}
 
 
+
 def kant_G1():
     l1 = ["i", "e", "c", "h"]
     l2 = ["f", "d", "b"]
@@ -48,15 +51,13 @@ def kant_G1():
     l3_edges = [("f", "a"), ("d", "a"), ("b", "a"), ("b", "g")]
     l4_edges = [(i, "v_n") for i in l3]  # + ["v_w", "v_e"]
 
-    final_edge = [("v_s", "v_n")]
 
     G = nx.DiGraph()
     G.add_edges_from(l1_edges + l2_edges + l3_edges + l4_edges)  # +  final_edge
 
+    # TODO check is st
     return G, assign_pos_w_cardinal(arrs)
 
-
-# TODO check is st
 
 
 def get_outer_face_st_graph(
@@ -87,21 +88,24 @@ def embed_other_target(_PG: nx.PlanarEmbedding, vertex="v_e"):
     # outer_face  = get_outer_face_st_graph(PG, pos)
     # start w v_e
     # TODO s
+    _PG.check_structure()
     source, target = "v_s", "v_n"
 
     PG = deepcopy(_PG)
     ref = list(PG.neighbors_cw_order(source))[-1]
     PG.add_half_edge_cw(source, vertex, reference_neighbor=ref)
     PG.add_half_edge_first(vertex, source)
+    PG.check_structure()
     
 
     ref = list(PG.neighbors_cw_order(target))[0]
     PG.add_half_edge_ccw(vertex, target, reference_neighbor=source)
     PG.add_half_edge_ccw(target, vertex, reference_neighbor=ref)
 
-    assert list(PG.neighbors_cw_order(target))[0] == vertex
+    # assert list(PG.neighbors_cw_order(target))[0] == vertex
     PG.check_structure()
-    return PG
+    directed_edges =[ (source, vertex), (vertex, target)]
+    return PG, directed_edges
 
 
 def embed_other_source(_PG: nx.PlanarEmbedding, vertex="v_w"):
@@ -110,27 +114,57 @@ def embed_other_source(_PG: nx.PlanarEmbedding, vertex="v_w"):
     PG = deepcopy(_PG)
 
     ref = list(PG.neighbors_cw_order(source))[0]
-    print(ref)
+    # print(ref)
     PG.add_half_edge_ccw(source, vertex, reference_neighbor=ref)
     PG.add_half_edge_first(vertex, source)
-    assert list(PG.neighbors_cw_order(source))[0] == vertex
+    PG.check_structure()
+    # assert list(PG.neighbors_cw_order(source))[0] == vertex
 
-    print(list(PG.neighbors_cw_order(source)))
+    # print(list(PG.neighbors_cw_order(source)))
 
     ref = list(PG.neighbors_cw_order(target))[-1]
     
     PG.add_half_edge_cw(target, vertex, reference_neighbor=ref)
-    print(f"{target} nbs: {list(PG.neighbors_cw_order(target))}")
+    # print(f"{target} nbs: {list(PG.neighbors_cw_order(target))}")
 
     PG.add_half_edge_cw(vertex, target, reference_neighbor=source)
-    print(f"{vertex} nbs: {list(PG.neighbors_cw_order(vertex))}")
-
-
-
+    # print(f"{vertex} nbs: {list(PG.neighbors_cw_order(vertex))}")
 
     PG.check_structure()
-    return PG
+    directed_edges =[ (source, vertex), (vertex, target)]
+    return PG, directed_edges
+
+def embed_target_source_edge(_PG: nx.PlanarEmbedding, source="v_s", target="v_n"):
+    PG = deepcopy(_PG)
+    other_source = "v_w"
+    # print(f"{source} cw: {list(PG.neighbors_cw_order(source))}")
+    PG.add_half_edge_ccw(source, target, reference_neighbor=other_source)
+    # print(f"{source} cw after: {list(PG.neighbors_cw_order(source))}")
+
+
+    # print(f"{target} cw: {list(PG.neighbors_cw_order(target))}")
+    PG.add_half_edge_cw(target, source, reference_neighbor=other_source)
+    # print(f"{target} cw after: {list(PG.neighbors_cw_order(target))}")
+    directed_edges = [(source, target)]
+
+    PG.check_structure()
+    return PG, directed_edges
 
 
 
     # check outer face, area should be opposite of if traverse other way
+
+
+def complete_kant_G1():
+    # TODO -> need to embed north south.. 
+    G, pos = kant_G1()
+    directed_edges = list(G.edges)
+    PG = create_embedding(G, pos)
+    PG1, de1 = embed_other_target(PG)
+    PG2, de2 = embed_other_source(PG1)
+    PG3, de3 = embed_target_source_edge(PG2)
+
+    return PG3, pos, directed_edges + de1 + de2 + de3
+
+    # PG_complete.check_structure()
+    # return PG_complete, pos

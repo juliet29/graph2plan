@@ -90,4 +90,6 @@ def create_embedding(G: nx.Graph, pos: VertexPositions):
     for e in edge_list.edges:
         handle_half_edge(e)
 
+    
+
     return PG
