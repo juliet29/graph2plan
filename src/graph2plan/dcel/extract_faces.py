@@ -1,11 +1,13 @@
 from ast import Name
 from collections import namedtuple
+from copy import deepcopy
 from attr import frozen
 import networkx as nx
-from typing import Generic, Literal, NamedTuple, TypeVar
 
 from networkx import NetworkXException
 from pprint import pprint
+
+# TODO these should become helpers interfaces
 from graph2plan.dcel.interfaces import (
     T,
     Coordinate,
@@ -16,51 +18,21 @@ from graph2plan.dcel.interfaces import (
     VertexPositions,
 )
 from random import uniform
-from itertools import cycle, tee
+from itertools import cycle
 from functools import partial
 
-# from graph2plan.dual.check import check_num_faces_is_correct
+from graph2plan.dual.interfaces import FacePair, MarkedNb
+from graph2plan.dual.interfaces import EdgeFaceDict
+from graph2plan.dual.interfaces import DualVertex
+from graph2plan.dual.interfaces import VertexDomain
+from graph2plan.helpers.utils import pairwise
 
 
-# def extract_faces(PG: nx.PlanarEmbedding):
-#     """[Based on networkx source code](https://networkx.org/documentation/stable/_modules/networkx/algorithms/planarity.html#PlanarEmbedding.check_structure)"""
-
-#     counted_half_edges = set()
-#     num_faces = 0
-#     num_half_edges = 0
-#     faces = {}
-#     for v in PG.nodes:
-#         for w in PG.neighbors_cw_order(v):
-#             num_half_edges += 1
-#             if (v, w) not in counted_half_edges:
-#                 # We encountered a new face
-#                 num_faces += 1
-#                 # Mark all half-edges belonging to this face
-#                 face = PG.traverse_face(v, w, counted_half_edges)
-#                 faces[num_faces] = face
-#                 # print(f"==>> face: {face}")
-#     check_num_faces_is_correct(len(PG.nodes), num_half_edges, num_faces)
-#     print(num_faces)
-#     return faces
-
-
-# TODO check out using e.next_face_half_edge..
-# def extract_faces(PG: nx.PlanarEmbedding):
-
-
-class FacePair(Generic[T], NamedTuple):
-    left: Face[T]
-    right: Face[T]
-
-
-EdgeFaceDict = dict[tuple[T, T], FacePair[T]]
 
 
 def prep_dual(
     PG: nx.PlanarEmbedding, directed_edges: list[tuple[T, T]]
 ) -> EdgeFaceDict[T]:
-    # edges  = Edges([Edge(*i) for  i in list(PG.edges)])
-    # unique_edges = edges.find_unique()
     edge_face_dict: EdgeFaceDict = {}
     for e in directed_edges:
         v, w = e
@@ -70,17 +42,6 @@ def prep_dual(
     return edge_face_dict
 
 
-class DualVertex(NamedTuple, Generic[T]):
-    ix: int
-    face: Face
-    edge: tuple[T, T]
-    side: Literal["LEFT", "RIGHT"]
-
-    @property
-    def name(self):
-        return f"v_f{self.ix}"
-
-
 def get_node_by_face(G: nx.DiGraph, face: Face):
     vertex = [vertex for vertex, data in G.nodes(data=True) if data.get("face") == face]
     assert len(vertex) == 1
@@ -88,41 +49,35 @@ def get_node_by_face(G: nx.DiGraph, face: Face):
     return vertex[0]
 
 
+
+def place_source_target_nodes(_G:nx.DiGraph, _pos: VertexPositions, faces:tuple[Face, Face]):
+
+    def handle_vertex(vertex, name, loc:tuple[float, float]):
+        nx.relabel_nodes(G, {vertex: name}, copy=False)
+        pos[name] = loc
+        del pos[vertex]
+
+    pos = deepcopy(_pos)
+    G = deepcopy(_G)
+
+    east_face, west_face= faces # NOTE - reversed from left/right # TODO make explicit when create the dual.. 
+    coords = CoordinateList.to_coordinate_list(_pos)
+    west_vertex = get_node_by_face(_G, west_face)
+    east_vertex = get_node_by_face(_G, east_face)
+    delta = 1
+
+
+    handle_vertex(west_vertex, "w*", (coords.bounds.min_x - delta, coords.mid_values.y))
+    handle_vertex(east_vertex, "e*", (coords.bounds.max_x + delta, coords.mid_values.y))
+
+    return G, pos 
+
+
+
+
 def create_dual(
     edge_face_dict: EdgeFaceDict[str], init_graph_pos: VertexPositions[str]
 ):
-    def finish():
-        # TODO use get_node_by_face()
-        west_vertex = [
-            vertex
-            for vertex, data in G.nodes(data=True)
-            if data.get("face") == west_face
-        ]
-        assert len(west_vertex) == 1
-        west_vertex = west_vertex[0]
-        print(f"==>> west_vertex: {west_vertex}")
-        east_vertex = [
-            vertex
-            for vertex, data in G.nodes(data=True)
-            if data.get("face") == east_face
-        ]
-        assert len(east_vertex) == 1
-        east_vertex = east_vertex[0]
-        print(f"==>> east_vertex: {east_vertex}")
-
-        coords = CoordinateList.to_coordinate_list(pos)
-        delta = 1
-        v = west_vertex
-        name = "w*"
-        nx.relabel_nodes(G, {v: name}, copy=False)
-        pos[name] = (coords.bounds.min_x - delta, coords.mid_values.y)
-        del pos[v]
-        v = east_vertex
-        name = "e*"
-        nx.relabel_nodes(G, {v: name}, copy=False)
-        pos[name] = (coords.bounds.max_x + delta, coords.mid_values.y)
-        del pos[v]
-
     def init_vertex(dual_vertex: DualVertex) -> str:
         pos[dual_vertex.name] = dual_vertex.face.get_position(init_graph_pos)
         G.add_node(
@@ -153,49 +108,23 @@ def create_dual(
     face_ix = 0
     source = "v_s"
     target = "v_n"
-    key_edge = frozenset((source, target))
-
-    # todo could be other way..
-    east_face, west_face = edge_face_dict[source, target]
 
     for edge, face_pair in edge_face_dict.items():
         f1 = get_or_init_vertex(DualVertex(face_ix, face_pair.left, edge, "LEFT"))
 
         f2 = get_or_init_vertex(DualVertex(face_ix + 1, face_pair.right, edge, "RIGHT"))
 
-        if frozenset(edge) == key_edge:
+        if frozenset(edge) == frozenset((source, target)):
             G.add_edge(f2, f1)
         else:
             G.add_edge(f1, f2)
 
         face_ix += 1
 
-        # print(seen_edges)
-
-    finish()
+    G, pos = place_source_target_nodes(G, pos, edge_face_dict[source, target])
     nx.draw_networkx(G, pos)
 
     return G, pos
-
-
-def check_is_source_target_graph(G: nx.DiGraph, show=False):
-    sources = [x for x in G.nodes() if G.in_degree(x) == 0]
-    targets = [x for x in G.nodes() if G.out_degree(x) == 0]
-    assert len(sources) == 1 and len(targets) == 1
-    # further, check that all nodes are touched o n paths from s to t..
-    if show:
-        print(f"==>> sources: {sources}")
-        print(f"==>> targets: {targets}")
-
-
-MarkedNb = NamedTuple("MarkedNb", [("name", str), ("mark", Literal["IN", "OUT"])])
-
-
-def pairwise(iterable):
-    "s -> (s0, s1), (s1, s2), (s2, s3), ..."
-    a, b = tee(iterable)
-    next(b, None)
-    return zip(a, b)
 
 
 def find_vertex_faces(PG: nx.PlanarEmbedding, directed_edges: list[tuple], node):
@@ -250,11 +179,6 @@ def get_longest_path_length(G, source, target):
 
     sorted_paths = sorted(path_lengths, reverse=True)
     return sorted_paths[0]
-
-
-class VertexDomain(NamedTuple):
-    x_min: int
-    x_max: int
 
 
 def calculate_x_domains(

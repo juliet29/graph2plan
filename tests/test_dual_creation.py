@@ -1,15 +1,17 @@
 import networkx as nx
-from graph2plan.dual.check import check_correct_n_faces_in_edge_face_dict
+from graph2plan.dual.check import (
+    check_correct_n_faces_in_edge_face_dict,
+    check_is_source_target_graph,
+)
 from graph2plan.dual.examples import embedded_kant_G1
 from graph2plan.dcel.extract_faces import (
     prep_dual,
     create_dual,
-    DualVertex,
     calculate_x_domains,
     find_vertex_faces,
     get_node_by_face,
-    check_is_source_target_graph,
 )
+from graph2plan.dual.interfaces import DualVertex
 
 
 def test_valid_embedding():

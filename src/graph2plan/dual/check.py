@@ -1,4 +1,5 @@
-from graph2plan.dcel.extract_faces import EdgeFaceDict
+import networkx as nx
+from graph2plan.dual.interfaces import EdgeFaceDict
 from graph2plan.dcel.interfaces import T
 
 
@@ -33,3 +34,21 @@ def check_correct_n_faces_in_edge_face_dict(edge_face_dict: EdgeFaceDict[T]):
     n_half_edges = len(edge_face_dict) * 2
 
     check_num_faces_is_correct(len(node_cnt), n_half_edges, len(face_cnt))
+
+
+def check_is_source_target_graph(G: nx.DiGraph, show=False):
+    sources = [x for x in G.nodes() if G.in_degree(x) == 0]
+    targets = [x for x in G.nodes() if G.out_degree(x) == 0]
+    assert len(sources) == 1 and len(targets) == 1
+    # further, check that all nodes are touched o n paths from s to t..
+    if show:
+        print(f"==>> sources: {sources}")
+        print(f"==>> targets: {targets}")
+    return sources[0], targets[0]
+
+
+def check_is_correctly_oriented_source_target_graph(G: nx.DiGraph, orientation="x", show=False):
+    source, target = check_is_source_target_graph(G, show)
+    if orientation == "x":
+        assert source == "w*" and target == "e*"
+
