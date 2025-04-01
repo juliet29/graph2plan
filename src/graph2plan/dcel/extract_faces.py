@@ -19,39 +19,29 @@ from random import uniform
 from itertools import cycle, tee
 from functools import partial
 
-
-def check_num_faces_is_correct(num_nodes, num_half_edges, num_faces):
-    # print(f"num_faces: {num_faces}")
-    num_edges = num_half_edges // 2
-    expected_faces = num_edges - num_nodes + 2
-    try:
-        assert num_nodes - num_edges + num_faces == 2
-    except AssertionError:
-        print(
-            f"Error! nodes {num_nodes}, edges {num_edges} | faces={num_faces} != exp_faces={expected_faces}"
-        )
+# from graph2plan.dual.check import check_num_faces_is_correct
 
 
-def extract_faces(PG: nx.PlanarEmbedding):
-    """[Based on networkx source code](https://networkx.org/documentation/stable/_modules/networkx/algorithms/planarity.html#PlanarEmbedding.check_structure)"""
+# def extract_faces(PG: nx.PlanarEmbedding):
+#     """[Based on networkx source code](https://networkx.org/documentation/stable/_modules/networkx/algorithms/planarity.html#PlanarEmbedding.check_structure)"""
 
-    counted_half_edges = set()
-    num_faces = 0
-    num_half_edges = 0
-    faces = {}
-    for v in PG.nodes:
-        for w in PG.neighbors_cw_order(v):
-            num_half_edges += 1
-            if (v, w) not in counted_half_edges:
-                # We encountered a new face
-                num_faces += 1
-                # Mark all half-edges belonging to this face
-                face = PG.traverse_face(v, w, counted_half_edges)
-                faces[num_faces] = face
-                # print(f"==>> face: {face}")
-    check_num_faces_is_correct(len(PG.nodes), num_half_edges, num_faces)
-    print(num_faces)
-    return faces
+#     counted_half_edges = set()
+#     num_faces = 0
+#     num_half_edges = 0
+#     faces = {}
+#     for v in PG.nodes:
+#         for w in PG.neighbors_cw_order(v):
+#             num_half_edges += 1
+#             if (v, w) not in counted_half_edges:
+#                 # We encountered a new face
+#                 num_faces += 1
+#                 # Mark all half-edges belonging to this face
+#                 face = PG.traverse_face(v, w, counted_half_edges)
+#                 faces[num_faces] = face
+#                 # print(f"==>> face: {face}")
+#     check_num_faces_is_correct(len(PG.nodes), num_half_edges, num_faces)
+#     print(num_faces)
+#     return faces
 
 
 # TODO check out using e.next_face_half_edge..
@@ -102,6 +92,7 @@ def create_dual(
     edge_face_dict: EdgeFaceDict[str], init_graph_pos: VertexPositions[str]
 ):
     def finish():
+        # TODO use get_node_by_face()
         west_vertex = [
             vertex
             for vertex, data in G.nodes(data=True)
@@ -152,9 +143,9 @@ def create_dual(
         if not matching_vertices:
             return init_vertex(dual_vertex)
 
-        assert (
-            len(matching_vertices) == 1
-        ), f"Should only have one matching vertex, instead have: {matching_vertices}"
+        assert len(matching_vertices) == 1, (
+            f"Should only have one matching vertex, instead have: {matching_vertices}"
+        )
         return matching_vertices[0]
 
     G = nx.DiGraph()
@@ -172,14 +163,7 @@ def create_dual(
 
         f2 = get_or_init_vertex(DualVertex(face_ix + 1, face_pair.right, edge, "RIGHT"))
 
-        if f1 == "v_f2" and f2 == "v_f10":
-            print(f"vf2: {(f1, f2)}")
-            print(f"==>> edge: {edge}")
-            print(f"==>> face_pair.left: {face_pair.left}")
-            print(f"==>> face_pair.right: {face_pair.right}")
-
         if frozenset(edge) == key_edge:
-            print("st!")
             G.add_edge(f2, f1)
         else:
             G.add_edge(f1, f2)
@@ -194,7 +178,7 @@ def create_dual(
     return G, pos
 
 
-def check_if_st(G: nx.DiGraph, show=True):
+def check_is_source_target_graph(G: nx.DiGraph, show=False):
     sources = [x for x in G.nodes() if G.in_degree(x) == 0]
     targets = [x for x in G.nodes() if G.out_degree(x) == 0]
     assert len(sources) == 1 and len(targets) == 1
@@ -250,13 +234,12 @@ def find_vertex_faces(PG: nx.PlanarEmbedding, directed_edges: list[tuple], node)
         if incoming_face_edge and outgoing_face_edge:
             left_face = Face(PG.traverse_face(node, incoming_face_edge[0].name))
             right_face = Face(PG.traverse_face(outgoing_face_edge[0].name, node))
-
-            # print(f"==>> right_face: {right_face}")
-            # print(f"==>> left_face: {left_face}")
             break
 
         if count > len(marked_cw_nbs) * 2:
-            raise Exception(f"Can't find incoming and outgoing for {node} -> {incoming}, {outgoing}")
+            raise Exception(
+                f"Can't find incoming and outgoing for {node} -> {incoming}, {outgoing}"
+            )
 
     assert left_face and right_face
     return left_face, right_face
@@ -285,7 +268,6 @@ def calculate_x_domains(
 
     vertex_distances: dict[str, VertexDomain] = {}
 
-
     for node in PG.nodes:
         if node == "v_s" or node == "v_n":
             continue
@@ -295,4 +277,4 @@ def calculate_x_domains(
         vertex_distances[node] = VertexDomain(d1(v_left), d1(v_right))
     print(f"==>> vertex_distances: {vertex_distances}")
 
-
+    return vertex_distances

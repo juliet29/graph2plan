@@ -97,8 +97,8 @@ class Edges(Generic[T]):
 class Face(Generic[T]):
     vertices: list[T]
 
-    # def __hash__(self) -> int:
-    #     return super().__hash__()
+    def __hash__(self) -> int:
+        return hash(frozenset(self.vertices))
 
     def get_position(self, pos: VertexPositions):
         points = MultiPoint([pos[i] for i in self.vertices])
@@ -108,7 +108,7 @@ class Face(Generic[T]):
     
     def __eq__(self, value: object) -> bool:
         if isinstance(value, Face):
-            return True if set(value.vertices) == set(self.vertices) else  False
+            return True if frozenset(value.vertices) == frozenset(self.vertices) else  False
         # TODO similarity up to cycled order.. 
         raise Exception("Invalid object for comparison")
 
