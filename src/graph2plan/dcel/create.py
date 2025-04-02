@@ -1,8 +1,8 @@
 import networkx as nx
 from sympy import Line, Triangle, N
 
-from graph2plan.dcel.interfaces import VertexPositions, transform_graph_egdes
-from .interfaces import Edge, T
+from graph2plan.helpers.general_interfaces import VertexPositions, T
+from .interfaces import Edge, transform_graph_egdes
 
 
 def create_line(edge: Edge, pos: VertexPositions):
@@ -10,7 +10,6 @@ def create_line(edge: Edge, pos: VertexPositions):
 
 
 def compute_angle_between_edges(edge1: Edge, edge2: Edge, pos: VertexPositions):
-
     assert edge1.u == edge2.u, "Assuming lines originate at same "
     "point"
 
@@ -89,7 +88,5 @@ def create_embedding(G: nx.Graph, pos: VertexPositions):
 
     for e in edge_list.edges:
         handle_half_edge(e)
-
-    
 
     return PG

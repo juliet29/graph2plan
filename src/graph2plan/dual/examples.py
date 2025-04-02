@@ -2,7 +2,8 @@ from typing import Literal
 import networkx as nx
 
 from graph2plan.dcel.create import create_embedding
-from ..dcel.interfaces import Coordinate, T, VertexPositions
+from ..helpers.general_interfaces import Coordinate, VertexPositions
+from ..dcel.interfaces import T
 from sympy import Polygon
 from copy import deepcopy
 
@@ -57,33 +58,26 @@ def kant_G1():
     return G, assign_pos_w_cardinal(arrs)
 
 
-def get_outer_face_st_graph(
-    PG: nx.PlanarEmbedding, pos: VertexPositions, source: Literal["v_s", "v_w"] = "v_s"
-):
-    def get_polygon_area(face: list):
-        p = Polygon(*[pos[i] for i in face])
-        assert isinstance(p, Polygon)
-        return p.area
+def kant_G2():
+    l1 = ["i", "e", "c", "h"]
+    l2 = ["f", "d", "b"]
+    l3 = ["j", "a", "g"]
+    arrs = [l1, l2, l3]
 
-    PG.check_structure()
-    source_neighbors = list(PG.neighbors_cw_order(source))
-    ccw_edge = (source, source_neighbors[-1])
-    outer_face = PG.traverse_face(*ccw_edge)
+    l1_edges = [("v_w", i) for i in ("i", "j")]
+    l2_edges = [("i", "e"), ("e", "d"), ("e", "c"), ("c", "h")]
+    l3_edges = [("j", "e"), ("j", "f"), ("f", "d"), ("d", "b")]
+    l4_edges = [("j", "a"), ("a", "g")]
+    l5_edges = [(i, "v_e") for i in ("g", "b", "h")]
 
-    # check using area
-    inner_face = PG.traverse_face(ccw_edge[1], ccw_edge[0])
-    outer_area, inner_area = [get_polygon_area(i) for i in (outer_face, inner_face)]
-    if inner_area < 1:
-        assert outer_area > 1
-    else:
-        assert outer_area < 1
-
-    return outer_face
+    G = nx.DiGraph()
+    G.add_edges_from(
+        l1_edges + l2_edges + l3_edges + l4_edges + l5_edges
+    )  # +  final_edge
+    return G, assign_pos_w_cardinal(arrs)
 
 
 def embed_other_target(_PG: nx.PlanarEmbedding, vertex="v_e"):
-    # outer_face  = get_outer_face_st_graph(PG, pos)
-    # start w v_e
     # TODO s
     _PG.check_structure()
     source, target = "v_s", "v_n"
@@ -97,36 +91,28 @@ def embed_other_target(_PG: nx.PlanarEmbedding, vertex="v_e"):
     ref = list(PG.neighbors_cw_order(target))[0]
     PG.add_half_edge_ccw(vertex, target, reference_neighbor=source)
     PG.add_half_edge_ccw(target, vertex, reference_neighbor=ref)
-
-    # assert list(PG.neighbors_cw_order(target))[0] == vertex
     PG.check_structure()
+
     directed_edges = [(source, vertex), (vertex, target)]
     return PG, directed_edges
 
 
 def embed_other_source(_PG: nx.PlanarEmbedding, vertex="v_w"):
+    _PG.check_structure()
     source, target = "v_s", "v_n"
 
     PG = deepcopy(_PG)
 
     ref = list(PG.neighbors_cw_order(source))[0]
-    # print(ref)
     PG.add_half_edge_ccw(source, vertex, reference_neighbor=ref)
     PG.add_half_edge_first(vertex, source)
     PG.check_structure()
-    # assert list(PG.neighbors_cw_order(source))[0] == vertex
-
-    # print(list(PG.neighbors_cw_order(source)))
 
     ref = list(PG.neighbors_cw_order(target))[-1]
-
     PG.add_half_edge_cw(target, vertex, reference_neighbor=ref)
-    # print(f"{target} nbs: {list(PG.neighbors_cw_order(target))}")
-
     PG.add_half_edge_cw(vertex, target, reference_neighbor=source)
-    # print(f"{vertex} nbs: {list(PG.neighbors_cw_order(vertex))}")
-
     PG.check_structure()
+
     directed_edges = [(source, vertex), (vertex, target)]
     return PG, directed_edges
 
@@ -162,5 +148,3 @@ def embedded_kant_G1():
 
     # PG_complete.check_structure()
     # return PG_complete, pos
-
-

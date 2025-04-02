@@ -1,5 +1,5 @@
-from graph2plan.dcel.interfaces import Face
-from graph2plan.dcel.interfaces import T
+from graph2plan.helpers.general_interfaces import Face
+from graph2plan.helpers.general_interfaces import T
 
 from typing import Generic, Literal, NamedTuple
 

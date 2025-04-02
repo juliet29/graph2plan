@@ -1,6 +1,6 @@
 import networkx as nx
 from graph2plan.dual.interfaces import EdgeFaceDict
-from graph2plan.dcel.interfaces import T
+from graph2plan.helpers.general_interfaces import T
 
 
 from collections import Counter
@@ -47,8 +47,9 @@ def check_is_source_target_graph(G: nx.DiGraph, show=False):
     return sources[0], targets[0]
 
 
-def check_is_correctly_oriented_source_target_graph(G: nx.DiGraph, orientation="x", show=False):
+def check_is_correctly_oriented_source_target_graph(
+    G: nx.DiGraph, orientation="x", show=False
+):
     source, target = check_is_source_target_graph(G, show)
     if orientation == "x":
         assert source == "w*" and target == "e*"
-

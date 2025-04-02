@@ -1,62 +1,12 @@
 import networkx as nx
 from dataclasses import dataclass
 from typing import Generic, NamedTuple, Literal
-from typing import TypeVar, Sequence
-from collections import namedtuple
+from typing import TypeVar
 from collections import deque
-from shapely import centroid, MultiPoint
 
-T = TypeVar("T")
-VertexPositions = dict[T, tuple[float, float]]
-
-
-@dataclass
-class Coordinate:
-    x: float
-    y: float
-
-    @property
-    def pair(self):
-        return (self.x, self.y)
-
-    def __eq__(self, value: object) -> bool:
-        if isinstance(value, Coordinate):
-            return True if (value.x == self.x) and (value.y == self.y) else False
-        raise Exception("Invalid object for comparison")
-
-
-Bounds = namedtuple(
-    "Bounds",
-    [
-        "min_x",
-        "max_x",
-        "min_y",
-        "max_y",
-    ],
-)
-
-
-@dataclass
-class CoordinateList:
-    coordinates: list[Coordinate]
-
-    @property
-    def bounds(self):
-        xs = [i.x for i in self.coordinates]
-        ys = [i.y for i in self.coordinates]
-        return Bounds(min(xs), max(xs), min(ys), max(ys))
-
-    @classmethod
-    def to_coordinate_list(cls, pos: VertexPositions):
-        return cls([Coordinate(*i) for i in pos.values()])
-
-    @property
-    def mid_values(self):
-        bounds = self.bounds
-        mid_x = (bounds.max_x - bounds.min_x) / 2 + bounds.min_x
-        mid_y = (bounds.max_y - bounds.min_y) / 2 + bounds.min_y
-        Mids = namedtuple("Mids", ["x", "y"])
-        return Mids(mid_x, mid_y)
+from graph2plan.helpers.general_interfaces import Coordinate
+from graph2plan.helpers.general_interfaces import Face
+from graph2plan.helpers.general_interfaces import T
 
 
 @dataclass
@@ -102,53 +52,8 @@ class Edges(Generic[T]):
 # TODO move to utils..
 
 
-@dataclass
-class Face(Generic[T]):
-    vertices: list[T]
-
-    def __hash__(self) -> int:
-        return hash(frozenset(self.vertices))
-
-    def get_position(self, pos: VertexPositions):
-        points = MultiPoint([pos[i] for i in self.vertices])
-        x, y = centroid(points).xy
-        return x[0], y[0]
-
-    def __eq__(self, value: object) -> bool:
-        if isinstance(value, Face):
-            return (
-                True if frozenset(value.vertices) == frozenset(self.vertices) else False
-            )
-        # TODO similarity up to cycled order..
-        raise Exception("Invalid object for comparison")
-
-
 class Vertex(NamedTuple):
     ix: int
-
-
-@dataclass
-class VertexRecord:
-    name: Vertex
-    coordinate: Coordinate
-    incident_edge: Edge
-
-
-@dataclass
-class FaceRecord:
-    name: Face
-    outer_component: Edge
-    inner_compnent: Edge
-
-
-@dataclass
-class EdgeRecord:
-    name: Edge
-    origin: Vertex
-    twin: Edge
-    incident_face: Face
-    next_edge: Edge
-    prev_edge: Edge
 
 
 def transform_graph_egdes(G: nx.Graph):
