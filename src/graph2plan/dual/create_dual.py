@@ -24,7 +24,7 @@ def prep_dual(
 def get_node_by_face(G: nx.DiGraph, face: Face):
     vertex = [vertex for vertex, data in G.nodes(data=True) if data.get("face") == face]
     assert len(vertex) == 1
-    print(f"==>> vertex[0]: {vertex[0]}")
+    # print(f"==>> vertex[0]: {vertex[0]}")
     return vertex[0]
 
 

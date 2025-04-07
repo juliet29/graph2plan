@@ -45,11 +45,9 @@ def split_outer_face(outer_face:list, source: SourceVertex="v_s", target: Target
                 nbs.append(i)
                 if i == i2:
                     check = False
-                    print(nbs)
                     break
             cnt+=1
             if cnt > len(outer_face*2):
-                print(nbs)
                 break
         return nbs
     
