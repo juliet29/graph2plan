@@ -68,15 +68,15 @@ def transform_graph_egdes(G: nx.Graph):
     return Edges(all_edges)
 
 
-def compare_order_of_faces(f1: Face, f2: Face):
-    # v1  = deque(ef['v_s','v_w'].left_face.vertices)
-    # v2 = deque(ef['v_s','v_e'].right_face.vertices)
+# def compare_order_of_faces(f1: Face, f2: Face):
+#     # v1  = deque(ef['v_s','v_w'].left_face.vertices)
+#     # v2 = deque(ef['v_s','v_e'].right_face.vertices)
 
-    v1 = deque(f1.vertices)
-    v2 = deque(f1.vertices)
+#     v1 = deque(f1.vertices)
+#     v2 = deque(f1.vertices)
 
-    ix = v1.index("v_w")
-    ix2 = v2.index("v_w")
-    diff = ix2 - ix
-    print(diff)
-    v2.rotate(diff - 1)
+#     ix = v1.index("v_w")
+#     ix2 = v2.index("v_w")
+#     diff = ix2 - ix
+#     print(diff)
+#     v2.rotate(diff - 1)

@@ -24,7 +24,7 @@ class Coordinate:
         raise Exception("Invalid object for comparison")
 
 Mids = namedtuple("Mids", ["x", "y"])
-CardinalPos = namedtuple("CardinalPos", ["north", "east", "south", "west"])
+CardinalPos = namedtuple("CardinalPos", ["v_n", "v_e", "v_s", "v_w"])
 @dataclass
 class ShapelyBounds:
     """[based on Shapely bounds attribute](https://shapely.readthedocs.io/en/stable/reference/shapely.MultiPoint.html#shapely.MultiPoint.bounds)"""
@@ -42,6 +42,7 @@ class ShapelyBounds:
     
     @property
     def mid_values(self):
+        # TODO use the centroid.. 
         mid_x = (self.max_x - self.min_x) / 2 + self.min_x
         mid_y = (self.max_y - self.min_y) / 2 + self.min_y
         return Mids(mid_x, mid_y)
@@ -55,7 +56,7 @@ class ShapelyBounds:
         )
     
     def circular_cardinal_values(self):
-        r = max(self.width/2, self.height/2)*(1.1)
+        r = max(self.width/2, self.height/2)*(1.01)
         left_x = self.mid_values.x - r
         right_x = self.mid_values.x + r
         bottom_y =  self.mid_values.y - r
