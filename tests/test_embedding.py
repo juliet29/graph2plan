@@ -4,6 +4,8 @@ import pytest
 import networkx as nx
 
 from graph2plan.dcel.interfaces import transform_graph_egdes
+from graph2plan.dual.examples import kant_G1, kant_G2
+from graph2plan.external_embed.main import fully_embed_graph
 
 
 @pytest.mark.skip(reason="Getting opposite result of what is expected..")
@@ -71,3 +73,10 @@ def test_other_graphs_complex_pos(G: nx.Graph):
     pos = {i[0]: i[1]["pos"] for i in G.nodes(data=True)}
     PG = create_embedding(G, pos)
     assert not PG.check_structure()
+
+
+def test_fully_embed_kant():
+    res1 = fully_embed_graph(*kant_G1(), "y")
+    res2 = fully_embed_graph(*kant_G2(), "x")
+    assert res1 and res2
+
