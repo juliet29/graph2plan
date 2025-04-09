@@ -90,10 +90,10 @@ def kant_G2():
 def fully_embed_kant():
     res1 = fully_embed_graph(*kant_G1(), "y")
     # res1.draw()
-    # res2 = fully_embed_graph(*kant_G2(), "x")
+    res2 = fully_embed_graph(*kant_G2(), "x")
     # res2.draw()
 
-    return res1, "res2"
+    return res1, res2
 
 
 def naive_embed_kant():
@@ -138,5 +138,14 @@ def test_dual_for_proper_embed():
     print("r1 - proper embedding")
     check_correct_n_faces_in_edge_face_dict(r1_faces)
     dual_graph, dual_pos = create_dual(r1_faces, r1.pos)
+
+    return r1, r1_faces
+
+def test_dual_for_proper_embed2():
+    _, r1 = fully_embed_kant()
+    r1_faces = prep_dual(r1.embedding, r1.directed_edges)
+    print("r1 - proper embedding")
+    check_correct_n_faces_in_edge_face_dict(r1_faces)
+    dual_graph, dual_pos = create_dual(r1_faces, r1.pos, "x")
 
     return r1, r1_faces

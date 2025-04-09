@@ -1,7 +1,7 @@
 from copy import deepcopy
 from graph2plan.helpers.general_interfaces import Face
 from graph2plan.dual.interfaces import DualVertex, EdgeFaceDict, FacePair
-from graph2plan.helpers.general_interfaces import T
+from graph2plan.helpers.general_interfaces import T, Axis, assignments
 
 
 import networkx as nx
@@ -30,7 +30,7 @@ def get_node_by_face(G: nx.DiGraph, face: Face):
 
 
 def place_source_target_nodes(
-    _G: nx.DiGraph, _pos: VertexPositions, faces: tuple[Face, Face]
+    _G: nx.DiGraph, _pos: VertexPositions, faces: tuple[Face, Face], axis: Axis
 ):
     def handle_vertex(vertex, name, loc: tuple[float, float]):
         nx.relabel_nodes(G, {vertex: name}, copy=False)
@@ -40,26 +40,46 @@ def place_source_target_nodes(
     pos = deepcopy(_pos)
     G = deepcopy(_G)
 
-    east_face, west_face = (
-        faces  # NOTE - reversed from left/right # TODO make explicit when create the dual..
-    )
-    coords = CoordinateList.to_coordinate_list(_pos)
-    west_vertex = get_node_by_face(_G, west_face)
-    east_vertex = get_node_by_face(_G, east_face)
-    print(f"==>> west_vertex: {west_vertex}")
-    print(f"==>> east_vertex: {east_vertex}")
+    if axis == "y":
+        east_face, west_face = (
+            faces  # NOTE - reversed from left/right # TODO make explicit when create the dual..
+        )
+        coords = CoordinateList.to_coordinate_list(_pos)
+        west_vertex = get_node_by_face(_G, west_face)
+        east_vertex = get_node_by_face(_G, east_face)
+        print(f"==>> west_vertex: {west_vertex}")
+        print(f"==>> east_vertex: {east_vertex}")
 
-    delta = 1
-    print(coords.bounds)
+        delta = 1
+        print(coords.bounds)
 
-    handle_vertex(west_vertex, "w*", (coords.bounds.min_x - delta, coords.mid_values.y ))
-    handle_vertex(east_vertex, "e*", (coords.bounds.max_x + delta, coords.mid_values.y ))
+        handle_vertex(west_vertex, "w*", (coords.bounds.min_x - delta, coords.mid_values.y ))
+        handle_vertex(east_vertex, "e*", (coords.bounds.max_x + delta, coords.mid_values.y ))
+    else:
+        south_face, north_face = (
+            faces
+        )
+        # north_face, south_face = (
+        #     faces
+        # )
+        coords = CoordinateList.to_coordinate_list(_pos)
+        south_vertex = get_node_by_face(_G, south_face)
+        north_vertex = get_node_by_face(_G, north_face)
+        print(f"==>> south_vertex: {south_vertex}")
+        print(f"==>> north_vertex: {north_vertex}")
+
+        delta = 1
+        print(coords.bounds)
+
+        handle_vertex(south_vertex, "s*", (coords.mid_values.x, coords.bounds.min_y - delta ))
+        handle_vertex(north_vertex, "n*", (coords.mid_values.x , coords.bounds.max_y + delta ))
+
 
     return G, pos
 
 
 def create_dual(
-    edge_face_dict: EdgeFaceDict[str], init_graph_pos: VertexPositions[str]
+    edge_face_dict: EdgeFaceDict[str], init_graph_pos: VertexPositions[str], axis: Axis = "y"
 ):
     
     def init_vertex(dual_vertex: DualVertex) -> str:
@@ -97,23 +117,30 @@ def create_dual(
 
     G = nx.DiGraph()
     pos: VertexPositions = {}
+    assn = assignments[axis]
     # face_ix = 0
-    source = "v_s"
-    target = "v_n"
+    source, target = assn.source, assn.target
 
     for edge, face_pair in edge_face_dict.items():
         f1 = get_or_init_vertex(DualVertex(face_pair.left, edge, "LEFT"))
 
         f2 = get_or_init_vertex(DualVertex(face_pair.right, edge, "RIGHT"))
 
-        if frozenset(edge) == frozenset((source, target)):
-            G.add_edge(f2, f1)
+        if axis == "y":
+            if frozenset(edge) == frozenset((source, target)):
+                G.add_edge(f2, f1)
+            else:
+                G.add_edge(f1, f2)
         else:
-            G.add_edge(f1, f2)
+            if frozenset(edge) == frozenset((source, target)):
+                G.add_edge(f1, f2)
+            else:
+                G.add_edge(f2, f1)
+
 
         
 
-    G, pos = place_source_target_nodes(G, pos, edge_face_dict[source, target])
+    G, pos = place_source_target_nodes(G, pos, edge_face_dict[source, target], axis)
     plt.figure()
     nx.draw_networkx(G, pos)
 

@@ -40,20 +40,23 @@ def test_dual_preparation(ix):
     "ix", [0, 1]
 )
 def test_dual_creation(ix):
+    axis = "y" if ix == 0 else "x"
     res = fully_embed_kant()
     PG, pos, directed_edges = res[ix]
     edge_face_dict = prep_dual(PG, directed_edges)
-    dual_graph, dual_pos = create_dual(edge_face_dict, pos)
+    dual_graph, dual_pos = create_dual(edge_face_dict, pos, axis)
     check_is_source_target_graph(dual_graph)
 
 @pytest.mark.parametrize(
     "ix", [0, 1]
 )
 def test_calc_x_domains(ix):
+    axis = "y" if ix == 0 else "x"
     res = fully_embed_kant()
     PG, pos, directed_edges = res[ix]
     edge_face_dict = prep_dual(PG, directed_edges)
-    dual_graph, dual_pos = create_dual(edge_face_dict, pos)
-    x_domains = calculate_x_domains(dual_graph, PG, directed_edges)
-    # number of nodes should be n in original embedding - 2
-    assert len(x_domains) == PG.order() - 2
+    dual_graph, dual_pos = create_dual(edge_face_dict, pos, axis)
+    if axis == "y":
+        x_domains = calculate_x_domains(dual_graph, PG, directed_edges)
+        # number of nodes should be n in original embedding - 2
+        assert len(x_domains) == PG.order() - 2
