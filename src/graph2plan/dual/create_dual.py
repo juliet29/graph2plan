@@ -8,6 +8,7 @@ import networkx as nx
 
 from graph2plan.helpers.general_interfaces import CoordinateList, VertexPositions
 
+import matplotlib.pyplot as plt
 
 def prep_dual(
     PG: nx.PlanarEmbedding, directed_edges: list[tuple[T, T]]
@@ -45,10 +46,14 @@ def place_source_target_nodes(
     coords = CoordinateList.to_coordinate_list(_pos)
     west_vertex = get_node_by_face(_G, west_face)
     east_vertex = get_node_by_face(_G, east_face)
-    delta = 1
+    print(f"==>> west_vertex: {west_vertex}")
+    print(f"==>> east_vertex: {east_vertex}")
 
-    handle_vertex(west_vertex, "w*", (coords.bounds.min_x - delta, coords.mid_values.y))
-    handle_vertex(east_vertex, "e*", (coords.bounds.max_x + delta, coords.mid_values.y))
+    delta = 1
+    print(coords.bounds)
+
+    handle_vertex(west_vertex, "w*", (coords.bounds.min_x - delta, coords.mid_values.y ))
+    handle_vertex(east_vertex, "e*", (coords.bounds.max_x + delta, coords.mid_values.y ))
 
     return G, pos
 
@@ -56,22 +61,31 @@ def place_source_target_nodes(
 def create_dual(
     edge_face_dict: EdgeFaceDict[str], init_graph_pos: VertexPositions[str]
 ):
+    
     def init_vertex(dual_vertex: DualVertex) -> str:
-        pos[dual_vertex.name] = dual_vertex.face.get_position(init_graph_pos)
+        
+        ix = len(G.nodes)+1
+        name = dual_vertex.name(ix)
+        pos[name] = dual_vertex.face.get_position(init_graph_pos)
         G.add_node(
-            dual_vertex.name,
+            name,
             face=dual_vertex.face,
             edge=dual_vertex.edge,
             side=dual_vertex.side,
         )
-        return dual_vertex.name
+        print(f"initializing vertex! name: {name}, face: {dual_vertex.face}")
+        return name
 
     def get_or_init_vertex(dual_vertex: DualVertex) -> str:
-        matching_vertices = [
-            vertex
-            for vertex, data in G.nodes(data=True)
-            if data.get("face") == dual_vertex.face
-        ]
+        try:
+            matching_vertices = [
+                vertex
+                for vertex, data in G.nodes(data=True)
+                if data.get("face") == dual_vertex.face
+            ]
+        except Exception:
+            print(G.nodes(data=True))
+            raise Exception
 
         if not matching_vertices:
             return init_vertex(dual_vertex)
@@ -83,23 +97,24 @@ def create_dual(
 
     G = nx.DiGraph()
     pos: VertexPositions = {}
-    face_ix = 0
+    # face_ix = 0
     source = "v_s"
     target = "v_n"
 
     for edge, face_pair in edge_face_dict.items():
-        f1 = get_or_init_vertex(DualVertex(face_ix, face_pair.left, edge, "LEFT"))
+        f1 = get_or_init_vertex(DualVertex(face_pair.left, edge, "LEFT"))
 
-        f2 = get_or_init_vertex(DualVertex(face_ix + 1, face_pair.right, edge, "RIGHT"))
+        f2 = get_or_init_vertex(DualVertex(face_pair.right, edge, "RIGHT"))
 
         if frozenset(edge) == frozenset((source, target)):
             G.add_edge(f2, f1)
         else:
             G.add_edge(f1, f2)
 
-        face_ix += 1
+        
 
     G, pos = place_source_target_nodes(G, pos, edge_face_dict[source, target])
+    plt.figure()
     nx.draw_networkx(G, pos)
 
     return G, pos

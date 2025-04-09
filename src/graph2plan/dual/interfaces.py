@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from graph2plan.helpers.general_interfaces import Face
 from graph2plan.helpers.general_interfaces import T
 
@@ -12,15 +13,14 @@ class FacePair(Generic[T], NamedTuple):
 EdgeFaceDict = dict[tuple[T, T], FacePair[T]]
 
 
-class DualVertex(NamedTuple, Generic[T]):
-    ix: int
+@dataclass
+class DualVertex(Generic[T]):
     face: Face
     edge: tuple[T, T]
     side: Literal["LEFT", "RIGHT"]
 
-    @property
-    def name(self):
-        return f"v_f{self.ix}"
+    def name(self, ix):
+        return f"v_f{ix}"
 
 
 class VertexDomain(NamedTuple):

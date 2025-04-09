@@ -2,7 +2,14 @@ from typing import Literal
 import networkx as nx
 
 from graph2plan.dcel.create import create_embedding
-from graph2plan.external_embed.main import fully_embed_graph
+from graph2plan.dual.check import check_correct_n_faces_in_edge_face_dict
+from graph2plan.dual.create_dual import create_dual, prep_dual
+from graph2plan.external_embed.main import fully_embed_graph, EmbedResult
+from graph2plan.external_embed.naive import (
+    embed_other_source,
+    embed_other_target,
+    embed_target_source_edge,
+)
 from ..helpers.general_interfaces import Coordinate, VertexPositions
 from ..dcel.interfaces import T
 from sympy import Polygon
@@ -13,7 +20,7 @@ from copy import deepcopy
 """
 
 
-def assign_pos_w_cardinal(arrs: list[list[T]]):
+def assign_pos_w_cardinal(arrs: list[list[T]]) -> VertexPositions:
     max_len = max([len(i) for i in arrs])
     n_arrs = len(arrs)
 
@@ -25,7 +32,7 @@ def assign_pos_w_cardinal(arrs: list[list[T]]):
     del_x = init_x + 1
     del_y = init_y + 1
 
-    # TODO remove- no longer being assigned here.. 
+    # TODO remove- no longer being assigned here..
 
     pos["v_w"] = Coordinate(init_x, default_y)
     pos["v_e"] = Coordinate(max_len + del_x + 1, default_y)
@@ -40,7 +47,7 @@ def assign_pos_w_cardinal(arrs: list[list[T]]):
             y = level + del_y
             pos[vertex] = Coordinate(x, y)
 
-    return {k: v.pair for k, v in pos.items()}
+    return VertexPositions({k: v.pair for k, v in pos.items()})
 
 
 def kant_G1():
@@ -83,10 +90,53 @@ def kant_G2():
 def fully_embed_kant():
     res1 = fully_embed_graph(*kant_G1(), "y")
     # res1.draw()
-    res2 = fully_embed_graph(*kant_G2(), "x")
+    # res2 = fully_embed_graph(*kant_G2(), "x")
     # res2.draw()
 
-    return res1, res2
+    return res1, "res2"
+
+
+def naive_embed_kant():
+    # TODO -> need to embed north south..
+    G, pos = kant_G1()
+    directed_edges = list(G.edges)
+    PG = create_embedding(G, pos)
+    PG1, de1 = embed_other_target(PG)
+    PG2, de2 = embed_other_source(PG1)
+    PG3, de3 = embed_target_source_edge(PG2)
+    print("\nnaive")
+    print(f"==>> PG: {len(PG.edges)}")
+    print(f"==>> PG1: {len(PG1.edges)}")
+    print(f"==>> PG2: {len(PG2.edges)}")
+    print(f"==>> PG3: {len(PG3.edges)}")
+
+    return EmbedResult(PG3, pos, sorted(directed_edges + de1 + de2 + de3))
 
     # PG_complete.check_structure()
     # return PG_complete, pos
+
+
+def compare_embeds():
+    r1, _ = fully_embed_kant()
+    n1 = naive_embed_kant()
+
+    r1_faces = prep_dual(r1.embedding, r1.directed_edges)
+    print("r1 - proper embedding")
+    check_correct_n_faces_in_edge_face_dict(r1_faces)
+    dual_graph, dual_pos = create_dual(r1_faces, r1.pos)
+
+    print("n1 - naive embedding")
+    n1_faces = prep_dual(n1.embedding, n1.directed_edges)
+    check_correct_n_faces_in_edge_face_dict(n1_faces)
+    dual_graph, dual_pos = create_dual(n1_faces, n1.pos)
+    return r1, n1, r1_faces, n1_faces
+
+
+def test_dual_for_proper_embed():
+    r1, _ = fully_embed_kant()
+    r1_faces = prep_dual(r1.embedding, r1.directed_edges)
+    print("r1 - proper embedding")
+    check_correct_n_faces_in_edge_face_dict(r1_faces)
+    dual_graph, dual_pos = create_dual(r1_faces, r1.pos)
+
+    return r1, r1_faces

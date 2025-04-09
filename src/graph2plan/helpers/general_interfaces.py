@@ -83,7 +83,7 @@ class CoordinateList:
     def bounds(self):
         xs = [i.x for i in self.coordinates]
         ys = [i.y for i in self.coordinates]
-        return ShapelyBounds(min(xs), max(xs), min(ys), max(ys))
+        return ShapelyBounds(min(xs), min(ys), max(xs),  max(ys))
 
     @classmethod
     def to_coordinate_list(cls, pos: VertexPositions):

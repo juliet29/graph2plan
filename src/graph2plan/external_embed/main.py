@@ -49,13 +49,15 @@ def add_other_vertices(
     new_edges = [(assn.other_source, i) for i in other_source_nbs] + [
         (i, assn.other_target) for i in other_target_nbs
     ]
+    outer_edges = [(assn.source, assn.other_source), (assn.source, assn.other_target), (assn.other_source, assn.target), (assn.other_target, assn.target)]
 
-    G1.add_edges_from(new_edges)
+    G1.add_edges_from(outer_edges)
     PG1 = extend_embedding(G1, PG, pos1)
-    return G1, PG1, pos1, new_edges
+    return G1, PG1, pos1, new_edges, outer_edges
 
 
 def embed_target_source_edge(_PG: nx.PlanarEmbedding, axis: Axis = "y"):
+    # TODO clean this up!
     assn = assignments[axis]
     PG = deepcopy(_PG)
 
@@ -97,8 +99,15 @@ class EmbedResult(NamedTuple):
 
 
 def fully_embed_graph(G: nx.Graph, pos: VertexPositions, axis: Axis):
+    # print(f"\n==>> axis: {axis}")
     directed_edges = list(G.edges)
     PG = create_embedding(G, pos)
-    _, PG1, pos1, new_edges1 = add_other_vertices(G, PG, pos, axis)
+    # print(f"==>> PG: {len(PG.edges)}")
+
+    _, PG1, pos1, new_edges1, outer_edges = add_other_vertices(G, PG, pos, axis)
+    # print(f"==>> PG1: {len(PG1.edges)}")
+
+    # print(new_edges1)
     PG2, new_edges2 = embed_target_source_edge(PG1, axis)
-    return EmbedResult(PG2, pos1, directed_edges + new_edges1 + new_edges2)
+    # print(f"==>> PG2: {len(PG2.edges)}")
+    return EmbedResult(PG2, pos1, sorted(directed_edges + outer_edges + new_edges2))
