@@ -2,7 +2,12 @@ import networkx as nx
 from itertools import cycle
 from functools import partial
 
-from graph2plan.helpers.general_interfaces import Face
+from graph2plan.helpers.general_interfaces import (
+    Axis,
+    Face,
+    get_assignments,
+    get_node_alias,
+)
 from graph2plan.dual.create_dual import get_node_by_face
 from graph2plan.dual.interfaces import MarkedNb, VertexDomain
 from graph2plan.helpers.utils import pairwise
@@ -56,10 +61,12 @@ def find_vertex_faces(PG: nx.PlanarEmbedding, directed_edges: list[tuple], node)
 
 
 def get_longest_path_length(G, source, target):
+    # print(list(nx.all_simple_paths(G, source, target)))
     path_lengths = [len(x) for x in nx.all_simple_paths(G, source, target)]
+    # print(path_lengths)
 
     sorted_paths = sorted(path_lengths, reverse=True)
-    return sorted_paths[0]
+    return sorted_paths[0]-1
 
 
 def calculate_x_domains(
@@ -83,3 +90,62 @@ def calculate_x_domains(
     print(f"==>> vertex_distances: {vertex_distances}")
 
     return vertex_distances
+
+
+def calculate_domains(
+    dual_graph: nx.DiGraph,
+    PG: nx.PlanarEmbedding,
+    directed_edges: list[tuple],
+    axis: Axis,
+):
+    assn = get_assignments(axis)
+    source, target = (
+        get_node_alias(assn.other_source),
+        get_node_alias(assn.other_target),
+    )
+    print(f"==>> source: {assn.source}")
+    print(f"==>> target: {assn.target}")
+
+    d1 = partial(get_longest_path_length, dual_graph, source)
+    D1 = d1(target)
+    print(f"==>> D1: {D1}")
+
+    vertex_distances: dict[str, VertexDomain] = {}
+
+    for node in PG.nodes:
+        if node == assn.source or node == assn.target:
+            continue
+        elif node == assn.other_source or node == assn.other_target:
+            continue
+
+        left_face, right_face = find_vertex_faces(PG, directed_edges, node)
+        v_left = get_node_by_face(dual_graph, left_face)
+        v_right = get_node_by_face(dual_graph, right_face)
+        v_domain = VertexDomain(d1(v_left), d1(v_right)) if axis == "y" else  VertexDomain(d1(v_right), d1(v_left))
+        vertex_distances[node] = v_domain
+
+
+    if axis == "y":
+        vertex_distances[assn.source] = VertexDomain(1, D1 - 1)
+        vertex_distances[assn.target] = VertexDomain(1, D1 - 1)
+        vertex_distances[assn.other_source] = VertexDomain(0, 1)
+        vertex_distances[assn.other_target] = VertexDomain(D1 - 1, D1)
+    else:
+        vertex_distances[assn.source] = VertexDomain(0, D1)
+        vertex_distances[assn.target] = VertexDomain(0, D1)
+        vertex_distances[assn.other_source] = VertexDomain(0,1)
+        vertex_distances[assn.other_target] = VertexDomain(D1 - 1, D1)
+
+
+    for key, value in vertex_distances.items():
+        try:
+            value.check_is_valid()
+        except AssertionError as a:
+            print(f"{key} has invalid distance: {a}")
+
+    print(f"==>> vertex_distances: {vertex_distances}")
+
+    return vertex_distances
+
+
+

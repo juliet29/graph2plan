@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from shapely import MultiPoint, centroid
 from typing import Generic, Literal, TypeVar
-
+from matplotlib.patches import Rectangle
 T = TypeVar("T")
 
 VertexPositions = dict[T, tuple[float, float]]
@@ -53,6 +53,7 @@ class ShapelyBounds:
         return Mids(mid_x, mid_y)
 
     def cardinal_values(self):
+        # TODO -> one of these is unused.. 
         return CardinalPos(
             (self.mid_values.x, self.max_y),
             (self.max_x, self.mid_values.y),
@@ -73,6 +74,21 @@ class ShapelyBounds:
             (self.mid_values.x, bottom_y),
             (left_x, self.mid_values.y),
         )
+    
+    def get_mpl_patch(self):
+        return Rectangle(
+            (self.min_x, self.min_y), self.width, self.height,             fill=False,
+            edgecolor="black",
+            alpha=0.2,
+        )
+        # return Rectangle(
+        #     (self.width.min, self.height.min),
+        #     self.width.size,
+        #     self.height.size,
+        #     fill=False,
+        #     edgecolor="black",
+        #     alpha=0.2,
+        # )
 
 
 @dataclass
@@ -90,6 +106,7 @@ class CoordinateList:
         return cls([Coordinate(*i) for i in pos.values()])
 
     @property
+    # TODO - this is redundant so remove! 
     def mid_values(self):
         bounds = self.bounds
         mid_x = (bounds.max_x - bounds.min_x) / 2 + bounds.min_x
@@ -132,3 +149,17 @@ assignments = {
         "v_e",
     ),
 }
+
+# TODO use this everywhere
+def get_assignments(axis: Axis):
+    return assignments[axis]
+
+node_aliases = {
+    "v_n": "n*",
+    "v_s": "s*",
+    "v_e": "e*",
+    "v_w": "w*",
+}
+
+def get_node_alias(node: str):
+    return node_aliases[node]

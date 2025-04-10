@@ -47,11 +47,11 @@ def place_source_target_nodes(
         coords = CoordinateList.to_coordinate_list(_pos)
         west_vertex = get_node_by_face(_G, west_face)
         east_vertex = get_node_by_face(_G, east_face)
-        print(f"==>> west_vertex: {west_vertex}")
-        print(f"==>> east_vertex: {east_vertex}")
+        # print(f"==>> west_vertex: {west_vertex}")
+        # print(f"==>> east_vertex: {east_vertex}")
 
         delta = 1
-        print(coords.bounds)
+        # print(coords.bounds)
 
         handle_vertex(west_vertex, "w*", (coords.bounds.min_x - delta, coords.mid_values.y ))
         handle_vertex(east_vertex, "e*", (coords.bounds.max_x + delta, coords.mid_values.y ))
@@ -65,11 +65,11 @@ def place_source_target_nodes(
         coords = CoordinateList.to_coordinate_list(_pos)
         south_vertex = get_node_by_face(_G, south_face)
         north_vertex = get_node_by_face(_G, north_face)
-        print(f"==>> south_vertex: {south_vertex}")
-        print(f"==>> north_vertex: {north_vertex}")
+        # print(f"==>> south_vertex: {south_vertex}")
+        # print(f"==>> north_vertex: {north_vertex}")
 
         delta = 1
-        print(coords.bounds)
+        # print(coords.bounds)
 
         handle_vertex(south_vertex, "s*", (coords.mid_values.x, coords.bounds.min_y - delta ))
         handle_vertex(north_vertex, "n*", (coords.mid_values.x , coords.bounds.max_y + delta ))
@@ -93,7 +93,7 @@ def create_dual(
             edge=dual_vertex.edge,
             side=dual_vertex.side,
         )
-        print(f"initializing vertex! name: {name}, face: {dual_vertex.face}")
+        # print(f"initializing vertex! name: {name}, face: {dual_vertex.face}")
         return name
 
     def get_or_init_vertex(dual_vertex: DualVertex) -> str:

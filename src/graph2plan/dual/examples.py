@@ -4,13 +4,15 @@ import networkx as nx
 from graph2plan.dcel.create import create_embedding
 from graph2plan.dual.check import check_correct_n_faces_in_edge_face_dict
 from graph2plan.dual.create_dual import create_dual, prep_dual
+from graph2plan.dual.create_rectangle import calculate_domains, calculate_x_domains
+from graph2plan.dual.interfaces import VertexDomain, Domain, Domains
 from graph2plan.external_embed.main import fully_embed_graph, EmbedResult
 from graph2plan.external_embed.naive import (
     embed_other_source,
     embed_other_target,
     embed_target_source_edge,
 )
-from ..helpers.general_interfaces import Coordinate, VertexPositions
+from ..helpers.general_interfaces import Coordinate, ShapelyBounds, VertexPositions
 from ..dcel.interfaces import T
 from sympy import Polygon
 from copy import deepcopy
@@ -134,18 +136,40 @@ def compare_embeds():
 
 def test_dual_for_proper_embed():
     r1, _ = fully_embed_kant()
+    r1.draw()
     r1_faces = prep_dual(r1.embedding, r1.directed_edges)
     print("r1 - proper embedding")
     check_correct_n_faces_in_edge_face_dict(r1_faces)
-    dual_graph, dual_pos = create_dual(r1_faces, r1.pos)
+    dual_graph, dual_pos = create_dual(r1_faces, r1.pos, "y")
+    x_domains = calculate_domains(dual_graph, r1.embedding, r1.directed_edges, "y")
 
-    return r1, r1_faces
+    return r1, r1_faces, x_domains
 
 def test_dual_for_proper_embed2():
     _, r1 = fully_embed_kant()
+    r1.draw()
     r1_faces = prep_dual(r1.embedding, r1.directed_edges)
     print("r1 - proper embedding")
     check_correct_n_faces_in_edge_face_dict(r1_faces)
     dual_graph, dual_pos = create_dual(r1_faces, r1.pos, "x")
+    y_domains = calculate_domains(dual_graph, r1.embedding, r1.directed_edges, "x")
+    # TODO calculate_y_domains
 
-    return r1, r1_faces
+    return r1, r1_faces, y_domains
+
+
+def merge_domains(x_domains: dict[str, VertexDomain], y_domains: dict[str, VertexDomain]):
+    # r2, r2_faces, y_domains = test_dual_for_proper_embed2()
+    # r1, r1_faces, x_domains = test_dual_for_proper_embed()
+    domains = []
+    assert x_domains.keys() == y_domains.keys()
+    for key in x_domains.keys():
+        xdom = x_domains[key]
+        ydom = y_domains[key]
+        domains.append(Domain(name=key, bounds=ShapelyBounds(min_x=xdom.min, min_y=ydom.min, max_x=xdom.max, max_y=ydom.max)))
+
+    doms =  Domains(domains)
+    doms.draw()
+
+    return doms
+
