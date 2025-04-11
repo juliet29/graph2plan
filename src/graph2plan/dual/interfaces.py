@@ -4,6 +4,7 @@ from graph2plan.helpers.general_interfaces import Face, ShapelyBounds
 from graph2plan.helpers.general_interfaces import T
 import matplotlib.pyplot as plt
 from typing import Generic, Literal, NamedTuple
+import shapely
 
 
 class FacePair(Generic[T], NamedTuple):
@@ -40,6 +41,7 @@ class Domains:
     domains: list[Domain]
 
     def get_domains_lim(self, PAD_BASE=1.4):
+        # TODO clean up.. 
         PAD = PAD_BASE * 1.1
         min_x = min([i.bounds.min_x for i in self.domains]) - PAD
         max_x = max([i.bounds.max_x for i in self.domains]) + PAD
@@ -55,10 +57,13 @@ class Domains:
             patch = d.bounds.get_mpl_patch()
             ax.add_artist(patch)
             ax.annotate(d.name, (.5, .5), xycoords=patch, ha='center', va='bottom')
-            # ax.text(d.bounds.mid_values.x, d.bounds.mid_values.y, d.name)
-        
-        # ax.autoscale_view()
         ax.set(xlim=xlim, ylim=ylim)
+
+    def to_shapely_rectangles(self):
+        shapes = [i.bounds.to_shapely_rectangle() for i in self.domains]
+        union = shapely.unary_union(shapes)
+        return union 
+
 
 
 MarkedNb = NamedTuple("MarkedNb", [("name", str), ("mark", Literal["IN", "OUT"])])

@@ -1,7 +1,7 @@
 from collections import namedtuple
 from dataclasses import dataclass
 
-from shapely import MultiPoint, centroid
+from shapely import MultiPoint, centroid, Polygon
 from typing import Generic, Literal, TypeVar
 from matplotlib.patches import Rectangle
 T = TypeVar("T")
@@ -81,14 +81,23 @@ class ShapelyBounds:
             edgecolor="black",
             alpha=0.2,
         )
-        # return Rectangle(
-        #     (self.width.min, self.height.min),
-        #     self.width.size,
-        #     self.height.size,
-        #     fill=False,
-        #     edgecolor="black",
-        #     alpha=0.2,
-        # )
+    
+    def get_rectangular_coords(self):
+        # counterclocksie starting at 7pm (bottom left )
+        coords = [
+            Coordinate(self.min_x, self.min_y), 
+            Coordinate(self.max_x, self.min_y),
+            Coordinate(self.max_x, self.max_y),
+            Coordinate(self.min_x, self.max_y),
+        ]
+        return coords
+    
+    def to_shapely_rectangle(self):
+        coords = self.get_rectangular_coords()
+        polygon = Polygon([i.pair for i in coords])
+        return polygon
+
+
 
 
 @dataclass

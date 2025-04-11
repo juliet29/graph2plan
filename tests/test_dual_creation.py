@@ -1,3 +1,4 @@
+import math
 import networkx as nx
 import pytest
 
@@ -6,11 +7,8 @@ from graph2plan.dual.check import (
     check_is_source_target_graph,
 )
 from graph2plan.dual.create_dual import create_dual, prep_dual
-from graph2plan.dual.create_rectangle import (
-    calculate_x_domains,
-)
-from graph2plan.dual.examples import fully_embed_kant
-from graph2plan.external_embed.main import EmbedResult
+from graph2plan.dual.create_rectangle import (calculate_domains)
+from graph2plan.dual.examples import fully_embed_kant, merge_domains, test_dual_for_proper_embed, test_dual_for_proper_embed2
 
 
 @pytest.mark.parametrize(
@@ -50,13 +48,35 @@ def test_dual_creation(ix):
 @pytest.mark.parametrize(
     "ix", [0, 1]
 )
-def test_calc_x_domains(ix):
+def test_calc_domains(ix):
     axis = "y" if ix == 0 else "x"
     res = fully_embed_kant()
     PG, pos, directed_edges = res[ix]
     edge_face_dict = prep_dual(PG, directed_edges)
     dual_graph, dual_pos = create_dual(edge_face_dict, pos, axis)
-    if axis == "y":
-        x_domains = calculate_x_domains(dual_graph, PG, directed_edges)
-        # number of nodes should be n in original embedding - 2
-        assert len(x_domains) == PG.order() - 2
+
+    domains = calculate_domains(dual_graph, PG, directed_edges, axis)
+    assert len(domains) == PG.order()
+
+
+@pytest.fixture()
+def doms():
+    _, _, x_domains = test_dual_for_proper_embed() # TODO clean this up.. 
+    _, _, y_domains = test_dual_for_proper_embed2()
+    doms = merge_domains(x_domains, y_domains)
+    return doms
+
+def test_merged_domains_are_rectangular(doms):
+    union = doms.to_shapely_rectangles()
+    assert math.isclose(union.minimum_rotated_rectangle.area, union.area)
+
+def get_area(doms, name):
+    [name] = [i for i in doms.domains if i.name == name]
+    return name.bounds.to_shapely_rectangle().area
+    
+def test_opposite_external_rectangles_have_equal_area(doms):
+    assert get_area(doms, "v_s") == get_area(doms, "v_n")
+    assert get_area(doms, "v_e") == get_area(doms, "v_w")
+# final output should be rectangular..
+# v_w, v_e should have the same area, as should vn_vs
+

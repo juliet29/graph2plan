@@ -158,6 +158,7 @@ def test_dual_for_proper_embed2():
     return r1, r1_faces, y_domains
 
 
+
 def merge_domains(x_domains: dict[str, VertexDomain], y_domains: dict[str, VertexDomain]):
     # r2, r2_faces, y_domains = test_dual_for_proper_embed2()
     # r1, r1_faces, x_domains = test_dual_for_proper_embed()
