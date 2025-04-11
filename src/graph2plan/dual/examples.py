@@ -12,7 +12,7 @@ from graph2plan.external_embed.naive import (
     embed_other_target,
     embed_target_source_edge,
 )
-from ..helpers.general_interfaces import Coordinate, ShapelyBounds, VertexPositions
+from ..helpers.general_interfaces import Axis, Coordinate, ShapelyBounds, VertexPositions
 from ..dcel.interfaces import T
 from sympy import Polygon
 from copy import deepcopy
@@ -157,7 +157,13 @@ def test_dual_for_proper_embed2():
 
     return r1, r1_faces, y_domains
 
-
+# TODO -> next two functions go elsewhere 
+def create_dual_and_calculate_domains(embed_result: EmbedResult, axis: Axis):
+    faces = prep_dual(embed_result.embedding, embed_result.directed_edges)
+    check_correct_n_faces_in_edge_face_dict(faces)
+    dual_graph, dual_pos = create_dual(faces, embed_result.pos, axis)
+    domains = calculate_domains(dual_graph, embed_result.embedding, embed_result.directed_edges, axis)
+    return domains
 
 def merge_domains(x_domains: dict[str, VertexDomain], y_domains: dict[str, VertexDomain]):
     # r2, r2_faces, y_domains = test_dual_for_proper_embed2()
@@ -170,7 +176,11 @@ def merge_domains(x_domains: dict[str, VertexDomain], y_domains: dict[str, Verte
         domains.append(Domain(name=key, bounds=ShapelyBounds(min_x=xdom.min, min_y=ydom.min, max_x=xdom.max, max_y=ydom.max)))
 
     doms =  Domains(domains)
-    doms.draw()
-
     return doms
+
+def create_domains_for_kant():
+    r1, r2 = fully_embed_kant()
+    x_domains = create_dual_and_calculate_domains(r1, "y")
+    y_domains = create_dual_and_calculate_domains(r2, "x")
+    return x_domains, y_domains
 
