@@ -1,11 +1,15 @@
 from graph2plan.dcel.examples import deberg_embedded, deberg
-from graph2plan.dcel.create import compute_angle_between_edges, create_embedding, is_cw
+from graph2plan.dcel.original import (
+    compute_angle_between_edges,
+    create_embedding,
+    is_cw,
+)
 import pytest
 import networkx as nx
 
 from graph2plan.dcel.interfaces import transform_graph_egdes
 from graph2plan.dual.examples import kant_G1, kant_G2
-from graph2plan.external_embed.main import fully_embed_graph
+from graph2plan.dcel.external import fully_embed_graph
 
 
 @pytest.mark.skip(reason="Getting opposite result of what is expected..")
@@ -79,4 +83,3 @@ def test_fully_embed_kant():
     res1 = fully_embed_graph(*kant_G1(), "y")
     res2 = fully_embed_graph(*kant_G2(), "x")
     assert res1 and res2
-

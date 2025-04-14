@@ -1,12 +1,10 @@
-import networkx as nx
 from dataclasses import dataclass
-from typing import Generic, NamedTuple, Literal
-from typing import TypeVar
-from collections import deque
+from typing import Any, Generic, Literal, NamedTuple
 
-from graph2plan.helpers.general_interfaces import Coordinate
-from graph2plan.helpers.general_interfaces import Face
-from graph2plan.helpers.general_interfaces import T
+import matplotlib.pyplot as plt
+import networkx as nx
+
+from graph2plan.helpers.geometry_interfaces import T, VertexPositions
 
 
 @dataclass
@@ -66,6 +64,17 @@ def transform_graph_egdes(G: nx.Graph):
         ix += 1
 
     return Edges(all_edges)
+
+
+class EmbedResult(NamedTuple):
+    embedding: nx.PlanarEmbedding
+    pos: VertexPositions
+    directed_edges: list[tuple[Any, Any]]
+
+    def draw(self):
+        plt.figure()
+        plt.title("Embedded Graph")
+        nx.draw_networkx(nx.DiGraph(self.directed_edges), self.pos)
 
 
 # def compare_order_of_faces(f1: Face, f2: Face):

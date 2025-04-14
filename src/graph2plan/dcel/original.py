@@ -1,17 +1,17 @@
 import networkx as nx
-from networkx import NetworkXException
-from networkx import PlanarEmbedding
-from sympy import Line, Triangle, N
+from networkx import NetworkXException, PlanarEmbedding
+from sympy import Line, N, Triangle
 
-from graph2plan.helpers.general_interfaces import VertexPositions, T
+from ..helpers.geometry_interfaces import T, VertexPositions
 from .interfaces import Edge, Edges, transform_graph_egdes
-from copy import deepcopy
 
-def soft_check_structure( PG: nx.PlanarEmbedding):
-    try: 
+
+def soft_check_structure(PG: nx.PlanarEmbedding):
+    try:
         PG.check_structure()
     except NetworkXException:
         print("Structure of this embedding is invalid!!!!")
+
 
 def create_line(edge: Edge, pos: VertexPositions):
     return Line(pos[edge.u], pos[edge.v])
@@ -67,8 +67,9 @@ def add_edge_with_reference(
     return PG
 
 
-
-def handle_half_edge(PG: PlanarEmbedding, pos: VertexPositions, edge_list: Edges, e: Edge[T]):
+def handle_half_edge(
+    PG: PlanarEmbedding, pos: VertexPositions, edge_list: Edges, e: Edge[T]
+):
     if e.u not in PG.nodes:
         PG.add_half_edge_first(e.u, e.v)
         return 1
@@ -85,38 +86,22 @@ def handle_half_edge(PG: PlanarEmbedding, pos: VertexPositions, edge_list: Edges
         add_edge_with_reference(pos, PG, e, ref)
         return 3
 
-    try: 
+    try:
         reference = get_closest_successor(
             pos, e, [edge_list.get(e.u, v) for v in successors]
         )
     except AssertionError:
-        print(f"e.u: {e.u}")
+        print(f"Issue when getting successor for e.u: {e.u}")
         raise Exception
     add_edge_with_reference(pos, PG, e, reference)
     return 4
 
 
-
 def create_embedding(G: nx.Graph, pos: VertexPositions):
     edge_list = transform_graph_egdes(G)
     PG = nx.PlanarEmbedding()
-
     for e in edge_list.edges:
         handle_half_edge(PG, pos, edge_list, e)
-
-    soft_check_structure(PG)
-
-    return PG
-
-
-def extend_embedding(G_new: nx.Graph, _PG: nx.PlanarEmbedding, pos: VertexPositions) -> nx.PlanarEmbedding:
-    PG = deepcopy(_PG)
-    G_diff = nx.Graph(set(G_new.edges).difference(PG.edges))
-    edge_list_diff = transform_graph_egdes(G_diff)
-    G_join = nx.Graph(set(G_new.edges).union(PG.edges))
-    edge_list_all = transform_graph_egdes(G_join)
-    for e in edge_list_diff.edges:
-        _ = handle_half_edge(PG, pos, edge_list_all, e)
     soft_check_structure(PG)
 
     return PG

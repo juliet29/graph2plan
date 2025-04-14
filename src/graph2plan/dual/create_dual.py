@@ -1,14 +1,12 @@
 from copy import deepcopy
-from graph2plan.helpers.general_interfaces import Face
-from graph2plan.dual.interfaces import DualVertex, EdgeFaceDict, FacePair
-from graph2plan.helpers.general_interfaces import T, Axis, assignments
-
-
-import networkx as nx
-
-from graph2plan.helpers.general_interfaces import CoordinateList, VertexPositions
 
 import matplotlib.pyplot as plt
+import networkx as nx
+
+from graph2plan.dual.interfaces import DualVertex, EdgeFaceDict, FacePair
+from graph2plan.helpers.geometry_interfaces import CoordinateList, T, VertexPositions
+from graph2plan.helpers.graph_interfaces import Axis, Face, assignments
+
 
 def prep_dual(
     PG: nx.PlanarEmbedding, directed_edges: list[tuple[T, T]]
@@ -53,12 +51,14 @@ def place_source_target_nodes(
         delta = 1
         # print(coords.bounds)
 
-        handle_vertex(west_vertex, "w*", (coords.bounds.min_x - delta, coords.mid_values.y ))
-        handle_vertex(east_vertex, "e*", (coords.bounds.max_x + delta, coords.mid_values.y ))
-    else:
-        south_face, north_face = (
-            faces
+        handle_vertex(
+            west_vertex, "w*", (coords.bounds.min_x - delta, coords.bounds.mid_values.y)
         )
+        handle_vertex(
+            east_vertex, "e*", (coords.bounds.max_x + delta, coords.bounds.mid_values.y)
+        )
+    else:
+        south_face, north_face = faces
         # north_face, south_face = (
         #     faces
         # )
@@ -71,20 +71,27 @@ def place_source_target_nodes(
         delta = 1
         # print(coords.bounds)
 
-        handle_vertex(south_vertex, "s*", (coords.mid_values.x, coords.bounds.min_y - delta ))
-        handle_vertex(north_vertex, "n*", (coords.mid_values.x , coords.bounds.max_y + delta ))
-
+        handle_vertex(
+            south_vertex,
+            "s*",
+            (coords.bounds.mid_values.x, coords.bounds.min_y - delta),
+        )
+        handle_vertex(
+            north_vertex,
+            "n*",
+            (coords.bounds.mid_values.x, coords.bounds.max_y + delta),
+        )
 
     return G, pos
 
 
 def create_dual(
-    edge_face_dict: EdgeFaceDict[str], init_graph_pos: VertexPositions[str], axis: Axis = "y"
+    edge_face_dict: EdgeFaceDict[str],
+    init_graph_pos: VertexPositions[str],
+    axis: Axis = "y",
 ):
-    
     def init_vertex(dual_vertex: DualVertex) -> str:
-        
-        ix = len(G.nodes)+1
+        ix = len(G.nodes) + 1
         name = dual_vertex.name(ix)
         pos[name] = dual_vertex.face.get_position(init_graph_pos)
         G.add_node(
@@ -93,7 +100,6 @@ def create_dual(
             edge=dual_vertex.edge,
             side=dual_vertex.side,
         )
-        # print(f"initializing vertex! name: {name}, face: {dual_vertex.face}")
         return name
 
     def get_or_init_vertex(dual_vertex: DualVertex) -> str:
@@ -136,12 +142,12 @@ def create_dual(
                 G.add_edge(f1, f2)
             else:
                 G.add_edge(f2, f1)
-
-
-        
-
     G, pos = place_source_target_nodes(G, pos, edge_face_dict[source, target], axis)
-    plt.figure()
-    nx.draw_networkx(G, pos)
 
     return G, pos
+
+
+def draw_dual(G, pos):
+    plt.figure()
+    plt.title("Dual Graph")
+    nx.draw_networkx(G, pos)

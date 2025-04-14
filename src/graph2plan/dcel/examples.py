@@ -1,14 +1,10 @@
 import networkx as nx
+from ..helpers.graph_interfaces import VertexPositions
 
-
-# def plot_embedded_graph(embedding: nx.PlanarEmbedding):
-#     pos = nx.combinatorial_embedding_to_pos(embedding)
-#     print(pos)
-#     nx.draw_networkx(embedding, pos)
-
+""" example from DeBerg s2.2 on doubly connected edge list (dcel) """
 
 def draw_deberg(G: nx.Graph, plot=False):
-    pos = {1: (0, 4), 2: (2, 4), 3: (2, 2), 4: (1, 1)}
+    pos = VertexPositions({1: (0, 4), 2: (2, 4), 3: (2, 2), 4: (1, 1)})
     if plot:
         nx.draw_networkx(G, pos)
 
@@ -28,8 +24,6 @@ def deberg(plot=False):
 
 
 def deberg_embedded():
-    """
-    example from DeBerg s2.2 on doubly connected edge list (dcel)"""
     G = nx.PlanarEmbedding()
 
     G.add_half_edge_first(1, 2)  # e11
