@@ -6,16 +6,21 @@ from graph2plan.dcel.original import create_embedding
 from ..dual.helpers import get_embedding_faces
 
 
+# TODO have different classes - based on first level, triangulation, four-connection..
+class ImproperGraphError(Exception):
+    pass
+class Improper3TPGraphError(Exception):
+    pass
+
 class Improper4TPGraphError(Exception):
     pass
 
 
 def check_is_planar(G):
-    planar_check, _ = nx.check_planarity(G)
     try:
-        assert planar_check
+        assert nx.check_planarity(G)
     except AssertionError:
-        raise Improper4TPGraphError("Four completed graph is not planar")
+        raise ImproperGraphError("Four completed graph is not planar")
 
 
 def check_is_biconnected(G):
@@ -23,35 +28,22 @@ def check_is_biconnected(G):
     try:
         assert artic_points == 0
     except AssertionError:
-        raise Improper4TPGraphError(
+        raise ImproperGraphError(
             f"not biconnected - articulation points =  {artic_points} "
         )
-    # add two connected check,,
-
-
-# def check_has_shared_neighbour(G, e):
-#     """In a triangulated graph, if two nodes form an edge, they should share a third neighbor"""
-#     u, v = e
-#     for node in G.nodes:
-#         if (node, u) in G.edges and (node, v) in G.edges:
-#             # once we find the shared nb, return
-#             return True
-#     return False
-
-
-# def check_is_three_connected(G):
-#     # TODO - replace with three connected check..
-#     for e in G.edges:
-#         if not check_has_shared_neighbour(G, e):
-#             raise NotTriangulatedError()
-#     return
+    # TODO think about if need expelicit 2-connected check.. 
 
 
 def check_is_k_connected(G, k):
+    assert k == 3 or k == 4
     degrees = list(nx.degree(G))
     for deg in degrees:
         if deg[1] < k:
-            raise Improper4TPGraphError(f"Node has less than {k} neighbors: {deg}")
+            if k == 4:
+                raise Improper4TPGraphError(f"Node has less than 4 neighbors: {deg}")
+            elif k == 3:
+                raise Improper3TPGraphError(f"Node has less than 3 neighbors: {deg}")
+
 
 
 # def check_is_3_connected(G):
@@ -59,10 +51,7 @@ def check_is_k_connected(G, k):
 
 
 def check_is_triangulated_chordal(G):
-    try:
-        assert nx.is_chordal(G)
-    except AssertionError:
-        raise Improper4TPGraphError("Graph is not chordal")
+    assert nx.is_chordal(G), "Graph is not chordal"
 
 
 def check_interior_faces_are_triangles(PG: nx.PlanarEmbedding):
@@ -72,7 +61,7 @@ def check_interior_faces_are_triangles(PG: nx.PlanarEmbedding):
         if face.n_vertices != 3:
             non_triangular_faces.add(face)
         if len(non_triangular_faces) > 1:
-            raise Improper4TPGraphError(
+            raise Improper3TPGraphError(
                 f"At least 2 non-triangular faces: {non_triangular_faces}"
             )
 
@@ -85,12 +74,12 @@ def check_has_no_seperating_triangle(G):
     if len(l3_cycles) == m - n + 1:
         return
     else:
-        raise Improper4TPGraphError(
+        raise Improper3TPGraphError(
             f"There are seperating triangles \n {len(l3_cycles)} three cycles ?= {m - n + 1}, where m={m}, n={n}"
         )
 
 
-def check_is_valid_triangulated(G, pos, PG=None):
+def check_is_valid_triangulated(G, pos=None, PG=None):
     check_is_planar(G)
     check_is_biconnected(G)
     # check_is_3_connected(G) # TODO think chordal is better..
@@ -99,6 +88,7 @@ def check_is_valid_triangulated(G, pos, PG=None):
     except AssertionError:
         print("Not chordal..checking if interior faces are triangles..")
         if not PG:
+            assert pos
             PG = create_embedding(G, pos)
         check_interior_faces_are_triangles(PG)
     check_has_no_seperating_triangle(G)
