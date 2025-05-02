@@ -1,5 +1,6 @@
 
 import networkx as nx
+from random import sample
 
 from graph2plan.helpers.auto_pos import assign_pos
 
@@ -25,10 +26,19 @@ def kk85():
 
 def kk85_outer_face():
     return ["v5", "v6", "v4", "v7", "v1", "v0"]
+
+
+def choose_alphas(outer_face:list):
+    assert len(outer_face) >= 3
+
+    alphas = sample(outer_face, 4)
+    return sorted(alphas, key = outer_face.index)
+
     
 
 def four_complete(G, pos, outer_face): 
-    pass
+    alphas = choose_alphas(outer_face)
+    
 
     # choose 4 points on outerface to be alphas
         # choose 4 random, and then order based on outerface order.. 
