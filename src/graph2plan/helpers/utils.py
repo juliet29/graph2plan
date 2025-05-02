@@ -1,4 +1,4 @@
-from itertools import tee
+from itertools import chain, tee
 from typing import Iterable
 
 
@@ -11,3 +11,13 @@ def pairwise(iterable):
     a, b = tee(iterable)
     next(b, None)
     return zip(a, b)
+
+
+def chain_flatten(lst: Iterable[Iterable]):
+    return list(chain.from_iterable(lst))
+
+
+def get_unique_items_in_list_keep_order(seq):
+    seen = set()
+    seen_add = seen.add
+    return [x for x in seq if not (x in seen or seen_add(x))]

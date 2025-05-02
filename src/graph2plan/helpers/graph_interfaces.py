@@ -1,8 +1,10 @@
 from collections import namedtuple
 from dataclasses import dataclass
-from typing import Generic, Literal
+from typing import Generic, Literal, NamedTuple
+from enum import Enum
 
 from shapely import MultiPoint, centroid
+from shewchuk import orientation
 
 from .geometry_interfaces import T, VertexPositions
 
@@ -62,3 +64,55 @@ node_aliases = {
 
 def get_node_alias(node: str):
     return node_aliases[node]
+
+
+
+
+# class AxisEnum(Enum):
+#     X = 0
+#     Y = 1
+
+# class OrientationEnum(Enum):
+#     IN = 0
+#     OUT = 1
+
+OrientationOptions = Literal["IN", "OUT"]
+CardinalOptions = Literal["NORTH", "EAST", "SOUTH", "WEST"]
+
+class CardinalDirectionEnum(Enum):
+    NORTH = 0
+    EAST = 1
+    SOUTH = 2
+    WEST = 3
+
+
+class CardinalDirectionData(NamedTuple):
+    enum: CardinalDirectionEnum
+    orientation: OrientationOptions
+    axis: Axis
+
+    @property
+    def vertex_name(self):
+        return f"v_{self.enum.name[0].lower()}"
+
+# # TODO could be a dict?
+# cardinal_directions = [
+#     CardinalDirection("NORTH", "IN", "y"),
+#     CardinalDirection("SOUTH", "OUT", "y"),
+#     CardinalDirection("EAST", "IN", "x"),
+#     CardinalDirection("WEST", "OUT", "x")
+# ]
+
+cardinal_directions: dict[CardinalDirectionEnum, CardinalDirectionData]= {
+    CardinalDirectionEnum.NORTH : CardinalDirectionData(CardinalDirectionEnum.NORTH, "IN", "y"),
+    CardinalDirectionEnum.EAST : CardinalDirectionData(CardinalDirectionEnum.EAST, "IN", "x"),
+    CardinalDirectionEnum.SOUTH : CardinalDirectionData(CardinalDirectionEnum.SOUTH, "OUT", "y"),
+    CardinalDirectionEnum.WEST : CardinalDirectionData(CardinalDirectionEnum.WEST, "OUT", "x"),
+
+}
+
+
+def get_vertex_name(drn: CardinalDirectionEnum):
+    return cardinal_directions[drn].vertex_name
+
+
