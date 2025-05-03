@@ -153,15 +153,12 @@ def test_four_complete():
         if source in cardinal_names and target in cardinal_names:
             cardinal_edges.append(edge)
     interior_edges = set(G.edges()).difference(set(cardinal_edges))
-    # print(f"{len(G.edges), len(cardinal_edges), len(interior_edges)}")
-    
     
 
     graph_points = list(pos.values())
     boundary = shp.MultiPoint(graph_points).convex_hull
     sb = ShapelyBounds(*boundary.bounds)
     bbox = Bbox.from_extents(sb.min_x, sb.min_y, sb.max_x, sb.max_y)
-    # print(bbox)
 
     arcs = []
     rad = -0.3
@@ -172,13 +169,10 @@ def test_four_complete():
         arc=f"arc3,rad={rad}"
         arrow = FancyArrowPatch(posA, posB,connectionstyle=arc )
         res = arrow.get_path().intersects_bbox(bbox)
-        # print(f"{(edge)} intersects = {res}")
         if not res:
             arcs.append((edge, arc))
-            # print(f"keeping arc => {arc}")
         else:
             arc=f"arc3,rad={rad*-1}"
-            # print(f"switching arc => {arc}")
             arcs.append((edge, arc))
 
     fig, ax = plt.subplots(1,1)
@@ -196,3 +190,5 @@ def test_four_complete():
         )
     nx.draw_networkx_nodes(G, full_pos, ax=ax)
     nx.draw_networkx_labels(G, full_pos, ax=ax)
+
+    return G, full_pos
