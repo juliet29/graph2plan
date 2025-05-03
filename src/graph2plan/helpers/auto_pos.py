@@ -38,3 +38,5 @@ def assign_pos(arrs: list[list[T]],  shift_value=1, ASSIGN_CARDINAL=False) -> Ve
             pos[vertex] = Coordinate(x, y)
 
     return VertexPositions({k: v.pair for k, v in pos.items()})
+
+
