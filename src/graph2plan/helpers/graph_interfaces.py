@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Generic, Literal, NamedTuple
 from enum import Enum
 
-from shapely import MultiPoint, centroid
+from shapely import MultiPoint, centroid, Polygon
 from shewchuk import orientation
 
 from .geometry_interfaces import T, VertexPositions
@@ -15,11 +15,23 @@ class Face(Generic[T]):
 
     def __hash__(self) -> int:
         return hash(frozenset(self.vertices))
+    
+    def points(self, pos: VertexPositions):
+        return [pos[i] for i in self.vertices]
+        
 
     def get_position(self, pos: VertexPositions):
-        points = MultiPoint([pos[i] for i in self.vertices])
-        x, y = centroid(points).xy
+        x, y = centroid(MultiPoint(self.points(pos))).xy
         return x[0], y[0]
+    
+    def get_area(self, pos:VertexPositions):
+        try:
+            p = Polygon(self.points(pos))
+            return p.area
+        except ValueError:
+            raise Exception(f"Problem getting area of face {self.vertices}!")
+
+    
 
     def __eq__(self, value: object) -> bool:
         if isinstance(value, Face):

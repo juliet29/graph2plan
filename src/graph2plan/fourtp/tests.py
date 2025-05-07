@@ -26,7 +26,7 @@ def test_co():
     G, pos = kk85()
     G, path_pairs = four_complete(G, kk85_outer_face())
     full_pos = place_cardinal(pos, path_pairs)
-    G, co = initialize_canonical_order(G, pos, full_pos)
+    G_c, co = initialize_canonical_order(G, pos, full_pos)
     print("-----Initialization complete---")
-    G, co = iterate_canonical_order(G, co, pos, full_pos)
+    G, co = iterate_canonical_order(G_c, co)
     return G, co
