@@ -4,7 +4,11 @@ import networkx as nx
 
 from graph2plan.dual.interfaces import EdgeFaceDict
 from graph2plan.helpers.geometry_interfaces import T
-from graph2plan.helpers.graph_interfaces import Face
+from graph2plan.helpers.graph_interfaces import (
+    CardinalDirectionEnum as CDE,
+    Face,
+    get_vertex_name,
+)
 
 
 def check_num_faces_is_correct(num_nodes, num_half_edges, num_faces):
@@ -67,6 +71,28 @@ def check_is_source_target_graph(G: nx.DiGraph, show=False):
         print(f"==>> sources: {sources}")
         print(f"==>> targets: {targets}")
     return sources[0], targets[0]
+
+
+# TODO -> this should be easier because should add an attribute when adding the cardinal nodes to the graph..
+def split_cardinal_and_interior_nodes(G):
+    cardinal_names = [get_vertex_name(i) for i in CDE]
+    cardinal_nodes = []
+    for node in G.nodes():
+        if node in cardinal_names:
+            cardinal_nodes.append(node)
+    interior_edges = set(G.nodes()).difference(set(cardinal_nodes))
+    return cardinal_nodes, interior_edges
+
+
+def split_cardinal_and_interior_edges(G):
+    cardinal_names = [get_vertex_name(i) for i in CDE]
+    cardinal_edges = []
+    for edge in G.edges():
+        source, target = edge
+        if source in cardinal_names and target in cardinal_names:
+            cardinal_edges.append(edge)
+    interior_edges = set(G.edges()).difference(set(cardinal_edges))
+    return cardinal_edges, interior_edges
 
 
 # def check_is_correctly_oriented_source_target_graph(

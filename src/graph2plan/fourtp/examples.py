@@ -27,4 +27,3 @@ def kk85():
 
 def kk85_outer_face():
     return ["v4", "v6", "v5", "v0", "v1", "v7"]
-
