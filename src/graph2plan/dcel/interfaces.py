@@ -47,10 +47,8 @@ class EdgeList(Generic[T]):
         return s
 
     @classmethod
-    def to_edge_list(cls, edges:Iterable):
+    def to_edge_list(cls, edges: Iterable):
         return cls([Edge(*i) for i in edges])
-    
-
 
 
 # TODO move to utils..
@@ -81,6 +79,10 @@ class EmbedResult(NamedTuple):
         plt.figure()
         plt.title("Embedded Graph")
         nx.draw_networkx(nx.DiGraph(self.directed_edges), self.pos)
+
+
+class CanonicalOrderingFailure(Exception):
+    pass
 
 
 # def compare_order_of_faces(f1: Face, f2: Face):

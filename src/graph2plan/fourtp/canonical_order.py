@@ -1,10 +1,11 @@
 from copy import deepcopy
+from math import e
 from typing import Union
 import networkx as nx
 
-from graph2plan.dcel.interfaces import EdgeList
+from graph2plan.dcel.interfaces import CanonicalOrderingFailure, EdgeList
 from graph2plan.helpers.utils import neighborhood
-from .check_canonical import is_Gk_minus_1_biconnected, are_u_v_in_Ck
+from .check_canonical import is_Gk_minus_1_biconnected, are_u_v_in_Ck, vk_permits_valid_order
 
 
 from graph2plan.fourtp.canonical_interfaces import (
@@ -22,7 +23,7 @@ def update_neighbors_visited(G: nx.Graph, co: CanonicalOrder, vertex_name):
     nbs = G.neighbors(vertex_name)
 
     nbs_to_update = [i for i in nbs if not co.vertices[i].is_marked]
-    print(f"updating nbs of vertex {vertex_name}: {nbs_to_update}")
+    # print(f"updating nbs of vertex {vertex_name}: {nbs_to_update}")
     for nb in nbs_to_update:
         co.vertices[nb].n_marked_nbs += 1
 
@@ -47,31 +48,33 @@ def find_chords(G_c: G_canonical, co: CanonicalOrder):
     return [e.pair for e in chords]
 
 
-def update_chords(G_c: G_canonical, co: CanonicalOrder, node:str):
-    nbs = first_and_second_nbs(G_c.G, node) # that are unmarked
+def update_chords(G_c: G_canonical, co: CanonicalOrder, node: str):
+    # TODO this could be cleaner if has a Gk-1..
+    nbs = first_and_second_nbs(G_c.G, node)  # that are unmarked
     unmarked_nbs = [nb for nb in nbs if not co.vertices[nb].is_marked]
     chords = find_chords(G_c, co)
     # set all chords of relevant nbs to 0
     for nb in nbs:
         co.vertices[nb].n_chords = 0
-    
-    # then update as they come up in edges.. 
+
+    # then update as they come up in edges..
     for chord in chords:
         for vertex in chord:
             if vertex in unmarked_nbs:
-                co.vertices[vertex].n_chords +=1
+                co.vertices[vertex].n_chords += 1
 
-    non_zero_chords = {i.name: i.n_chords for i in co.vertices.values() if i.n_chords > 0}
+    non_zero_chords = {
+        i.name: i.n_chords for i in co.vertices.values() if i.n_chords > 0
+    }
     print(f"==>> non_zero_chords: {non_zero_chords}")
 
 
-def check_and_update_chords(G_c: G_canonical, co: CanonicalOrder, node:str):
+def check_and_update_chords(G_c: G_canonical, co: CanonicalOrder, node: str):
     G_unmarked = G_c.G.subgraph(co.unmarked)
     if nx.is_chordal(G_unmarked):
-        G_c.draw(co.unmarked)
+        # G_c.draw(co.unmarked)
         print(f"outer face of unmarked: {G_c.outer_face_of_unmarked(co)}")
         update_chords(G_c, co, node)
-        
 
 
 # TODO collapse entry..
@@ -80,38 +83,18 @@ def initialize_canonical_order(_G: nx.Graph, pos, full_pos):
     G = deepcopy(_G).to_undirected()
     G_c = G_canonical(G, pos, full_pos)
     vertices = {i: VertexData(i) for i in G.nodes}
-    co = CanonicalOrder(vertices, u="v_s", v="v_e", w="v_n", x="v_w", n=G.order())
+    co = CanonicalOrder(vertices, u="v_s", v="v_e", w="v_n", n=G.order())
 
     # mark and order the starting nodes, but dont update their nbs
-    co.vertices[co.u].is_marked = True
-    co.vertices[co.v].is_marked = True
-    co.vertices[co.u].ordered_number = 1
-    co.vertices[co.v].ordered_number = 2
-    update_neighbors_visited(G, co, co.u)
-    update_neighbors_visited(G, co, co.v)
+    for ix, node in enumerate([co.u, co.v]):
+        co.vertices[node].ordered_number = ix + 1
+        co.vertices[node].is_marked = True
+        update_neighbors_visited(G, co, node)
 
-    # set v_n(orth), and v_w to be v_n and v_n-1, and update their nbs
-    # TODO check v_n(orth) is valid, check 1 only
 
-    co.vertices[co.w].n_marked_nbs = 2
-    co.vertices[co.w].is_marked = True
     co.vertices[co.w].ordered_number = co.n
-    # update_neighbors_visited(G, co, co.w)
-    # update_chords(G_c, co)
-    # co.decrement_k()
+    co.vertices[co.w].n_marked_nbs = 2
 
-    # # no vertices will yet have up to two neighbors, so pick v_w
-    # # TODO check (v_w is valid, check 1 and 2.1)
-    # co.vertices[co.x].is_marked = True
-    # co.vertices[co.w].ordered_number = co.k
-    # update_neighbors_visited(G, co, co.x)
-    # update_chords(G_c, co)
-    # co.decrement_k()
-
-    # check the graph is ok at this point...
-
-    # now should have 1 potential nb
-    # co.potential_vertices()
     assert len(co.potential_vertices()) == 1
 
     return G_c, co
@@ -120,26 +103,34 @@ def initialize_canonical_order(_G: nx.Graph, pos, full_pos):
 def iterate_canonical_order(G_c: G_canonical, co: CanonicalOrder):
     count = 0
     print(co.k, co.n)
-    while co.k < co.n:
+    while co.k < co.n - 1:
         potential = co.potential_vertices()
         if len(potential) == 0:
             raise Exception("No potential vertices!")
+        
+
         if len(potential) > 1:
             print(
                 f"Multiple potential: {[i.name for i in potential]}. Choosing {potential[0].name}"
             )
 
         vk = potential[0]
-        co.vertices[co.w].is_marked = False # TODO note that unset v_n so that it can once again be added 
+
+
+        # TODO make another loop to check all the tests..
 
         try:
             co.vertices[vk.name].ordered_number = co.k
+            vk_permits_valid_order(G_c, co, vk.name)
             # test choice of vk produces valid graph..
-            is_Gk_minus_1_biconnected(G_c.G, co)
-            are_u_v_in_Ck(G_c, co)
-        except:
+            # is_Gk_minus_1_biconnected(G_c.G, co)
+            # are_u_v_in_Ck(G_c, co)
+        except CanonicalOrderingFailure:
+            G_c.draw(co.unmarked)
+            co.show_vertices()
             raise Exception(f"While iterating, ordering {vk.name} failed..")
-        # TODO two more checks => has two neighbors in G - Gk-1, and neighbors form path in marked 
+            # TODO breadth-first search? shouldnt be nessecary bc they prove an ordering always exists...
+        # TODO two more checks => has two neighbors in G - Gk-1, and neighbors form path in marked
 
         co.vertices[vk.name].is_marked = True
 
@@ -149,8 +140,12 @@ def iterate_canonical_order(G_c: G_canonical, co: CanonicalOrder):
 
         count += 1
 
-        if count > 10:
-            print("breaking.. ")
-            break
+        if count > co.n:
+            raise Exception("Iterations have exceeded number of nodes.. breaking!")
+        
+    print("Time to order the last node..")
+    assert len(co.unordered) == 1, f"More than 1 unordered node! {co.unordered}"
+    vk = co.unordered[0]
+    co.vertices[vk].ordered_number = co.k 
 
     return G_c, co

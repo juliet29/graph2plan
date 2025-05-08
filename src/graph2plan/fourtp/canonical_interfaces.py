@@ -28,7 +28,7 @@ class VertexData:
     @property
     def is_potential_next(self):
         if not self.is_marked and self.n_marked_nbs >= 2 and self.n_chords == 0:
-            print(f"{self.name} is potential next")
+            # print(f"{self.name} is potential next")
             return True
         return False
 
@@ -39,30 +39,24 @@ class CanonicalOrder:
     u: str
     v: str
     w: str  # => v_n
-    x: str  # "current node.." => v_w
-    # n: int
     n: int  # number of vertices
     k: int = 3
-
-    # @property
-    # def num_vertices(self):
-    #     return len(self.vertices)
-
-    # @property
-    # def curr_k(self):
-    #     return self.k
-
-    def increment_k(self):
-        print(f"incrementing k from {self.k} to {self.k + 1}")
-        self.k += 1
-
-    # def decrement_k(self):
-    #     self.k -= 1
-    #     print(f"decrementing k from {self.k + 1} to {self.k}")
 
     @property
     def unmarked(self):
         return [i.name for i in self.vertices.values() if not i.is_marked]
+    
+    @property
+    def unordered(self):
+        return [i.name for i in self.vertices.values() if i.ordered_number < 0]
+
+    @property
+    def Gk_nodes(self):
+        return [
+            i.name
+            for i in self.vertices.values()
+            if i.ordered_number > 0 and i.ordered_number <= self.k
+        ]
 
     @property
     def Gk_minus_1_nodes(self):
@@ -73,19 +67,26 @@ class CanonicalOrder:
         ]
 
     @property
-    def Gk_nodes(self):
+    def G_diff_Gk_minus_1_nodes(self):
         return [
             i.name
             for i in self.vertices.values()
-            if i.ordered_number > 0 and i.ordered_number <= self.k
+            if i.name not in self.Gk_minus_1_nodes
         ]
+
+    def increment_k(self):
+        print(f"incrementing k from {self.k} to {self.k + 1}")
+        self.k += 1
 
     def potential_vertices(self):
         return [
             i
             for i in self.vertices.values()
-            if i.is_potential_next and i.name != self.u and i.name != self.v
-        ]
+            if i.is_potential_next
+            and i.name != self.u
+            and i.name != self.v
+            and i.name != self.w
+        ]  # TODO prevent from selecting v_n..
 
     def show_vertices(self):
         s = sorted(
@@ -119,14 +120,12 @@ class G_canonical:
 
     def outer_face_at_k(self, co: CanonicalOrder):
         return self.get_outer_face_of_nodes(co.Gk_nodes)
-        # nodes_to_remove = set_difference(self.embedding.nodes, co.Gk_nodes)
 
-        # _embedding = deepcopy(self.embedding)
-        # _embedding.remove_nodes_from(nodes_to_remove)
-        # return get_external_face(_embedding, self.full_pos)
+    def outer_face_at_k_minus_1(self, co: CanonicalOrder):
+        return self.get_outer_face_of_nodes(co.Gk_minus_1_nodes)
 
     def outer_face_of_unmarked(self, co: CanonicalOrder):
-        return self.get_outer_face_of_nodes(co.unmarked, print_other_faces=True)
+        return self.get_outer_face_of_nodes(co.unmarked, print_other_faces=False)
 
     def draw(self, nodes_to_include: list):
         G_to_draw = self.G.subgraph(nodes_to_include)
@@ -134,4 +133,11 @@ class G_canonical:
 
 
 class NotImplementedError(Exception):
+    pass
+
+
+class CanonicalOrderingFailure(Exception):
+    pass
+
+class EmbeddingFailure(Exception):
     pass

@@ -62,7 +62,11 @@ def get_external_face(PE: nx.PlanarEmbedding, full_pos: VertexPositions):
     Assumptions: the graphs interior is triangulated, while the exterior may or may not be. Chords may or may not exist. In the ideal case where there are no chords and fully triangulated =>
     https://cs.stackexchange.com/questions/116518/given-a-dcel-how-do-you-identify-the-unbounded-face """
 
+
     # TODO better logic -> cant do if there are chords + fully triangulated.. 
+    if PE.order() <= 3:
+        return list(PE.nodes)
+
     all_faces = get_embedding_faces(PE)
     triangular_faces = [len(face.vertices) == 3 for face in all_faces]
 

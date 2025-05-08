@@ -32,14 +32,10 @@ def test_co():
     full_pos = place_cardinal(pos, path_pairs)
     G_c, co = initialize_canonical_order(G, pos, full_pos)
     print("-----Initialization complete---")
-    try:
-        G_c, co = iterate_canonical_order(G_c, co)
-    except NotImplementedError:
-        print("time to work on chords.. ")
-        return G_c, co
 
-        return G_c, co
+    G_c, co = iterate_canonical_order(G_c, co)
     return G_c, co
+
 
 
 def test_external_face():
