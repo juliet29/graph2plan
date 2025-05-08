@@ -47,7 +47,7 @@ def find_chords(G_c: G_canonical, co: CanonicalOrder):
     return [e.pair for e in chords]
 
 
-def update_chords(G_c: G_canonical, co: CanonicalOrder, node):
+def update_chords(G_c: G_canonical, co: CanonicalOrder, node:str):
     nbs = first_and_second_nbs(G_c.G, node) # that are unmarked
     unmarked_nbs = [nb for nb in nbs if not co.vertices[nb].is_marked]
     chords = find_chords(G_c, co)
@@ -61,11 +61,11 @@ def update_chords(G_c: G_canonical, co: CanonicalOrder, node):
             if vertex in unmarked_nbs:
                 co.vertices[vertex].n_chords +=1
 
-    non_zero_chords = [i for i in co.vertices.values() if i.n_chords > 0]
+    non_zero_chords = {i.name: i.n_chords for i in co.vertices.values() if i.n_chords > 0}
     print(f"==>> non_zero_chords: {non_zero_chords}")
 
 
-def check_and_update_chords(G_c: G_canonical, co: CanonicalOrder, node):
+def check_and_update_chords(G_c: G_canonical, co: CanonicalOrder, node:str):
     G_unmarked = G_c.G.subgraph(co.unmarked)
     if nx.is_chordal(G_unmarked):
         G_c.draw(co.unmarked)
@@ -150,12 +150,12 @@ def iterate_canonical_order(G_c: G_canonical, co: CanonicalOrder):
         co.vertices[vk.name].is_marked = True
 
         update_neighbors_visited(G_c.G, co, vk.name)
-        check_and_update_chords(G_c, co, vk)
+        check_and_update_chords(G_c, co, vk.name)
         co.increment_k()
 
         count += 1
 
-        if count > 2:
+        if count > 4:
             print("breaking.. ")
             break
 
