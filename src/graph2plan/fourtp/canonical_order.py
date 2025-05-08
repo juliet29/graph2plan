@@ -73,13 +73,6 @@ def check_and_update_chords(G_c: G_canonical, co: CanonicalOrder, node:str):
         update_chords(G_c, co, node)
         
 
-        # draw_four_complete_graph(G_unmarked, G_c.pos, G_c.full_pos)
-        # raise NotImplementedError("Haven't handled chordal graph! ")
-
-        # TODO -> update the co.chords variable for each node and all its nbs
-        # also reflect fact that some may have 0 chords..
-    # otherwise do nothing..
-
 
 # TODO collapse entry..
 def initialize_canonical_order(_G: nx.Graph, pos, full_pos):
@@ -130,13 +123,14 @@ def iterate_canonical_order(G_c: G_canonical, co: CanonicalOrder):
     while co.k < co.n:
         potential = co.potential_vertices()
         if len(potential) == 0:
-            raise Exception(f"No potential vertices: {co.show_vertices()}")
+            raise Exception("No potential vertices!")
         if len(potential) > 1:
             print(
                 f"Multiple potential: {[i.name for i in potential]}. Choosing {potential[0].name}"
             )
 
         vk = potential[0]
+        co.vertices[co.w].is_marked = False # TODO note that unset v_n so that it can once again be added 
 
         try:
             co.vertices[vk.name].ordered_number = co.k
@@ -144,8 +138,8 @@ def iterate_canonical_order(G_c: G_canonical, co: CanonicalOrder):
             is_Gk_minus_1_biconnected(G_c.G, co)
             are_u_v_in_Ck(G_c, co)
         except:
-            raise Exception(f"ordering {vk.name} failed..")
-        # TODO one more check!
+            raise Exception(f"While iterating, ordering {vk.name} failed..")
+        # TODO two more checks => has two neighbors in G - Gk-1, and neighbors form path in marked 
 
         co.vertices[vk.name].is_marked = True
 
@@ -155,7 +149,7 @@ def iterate_canonical_order(G_c: G_canonical, co: CanonicalOrder):
 
         count += 1
 
-        if count > 4:
+        if count > 10:
             print("breaking.. ")
             break
 
