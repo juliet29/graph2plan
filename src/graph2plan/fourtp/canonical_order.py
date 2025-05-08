@@ -25,7 +25,8 @@ def update_neighbors_visited(G: nx.Graph, co: CanonicalOrder, vertex_name):
 def update_chords(G_c: G_canonical, co: CanonicalOrder):
     G_unmarked = G_c.G.subgraph(co.unmarked)
     if nx.is_chordal(G_unmarked):
-        draw_four_complete_graph(G_unmarked, G_c.pos, G_c.full_pos)
+        G_c.draw(co.unmarked)
+        # draw_four_complete_graph(G_unmarked, G_c.pos, G_c.full_pos)
         raise Exception("Haven't handled chordal graph! ")
         # TODO -> update the co.chords variable for each node and all its nbs
     # otherwise do nothing..
@@ -37,37 +38,38 @@ def initialize_canonical_order(_G: nx.Graph, pos, full_pos):
     G = deepcopy(_G).to_undirected()
     G_c = G_canonical(G, pos, full_pos)
     vertices = {i: VertexData(i) for i in G.nodes}
-    co = CanonicalOrder(
-        vertices, u="v_s", v="v_e", w="v_n", x="v_w", k=G.order(), n=G.order()
-    )
+    co = CanonicalOrder(vertices, u="v_s", v="v_e", w="v_n", x="v_w", n=G.order())
 
     # mark and order the starting nodes, but dont update their nbs
     co.vertices[co.u].is_marked = True
     co.vertices[co.v].is_marked = True
     co.vertices[co.u].ordered_number = 1
     co.vertices[co.v].ordered_number = 2
+    update_neighbors_visited(G, co, co.u)
+    update_neighbors_visited(G, co, co.v)
 
     # set v_n(orth), and v_w to be v_n and v_n-1, and update their nbs
     # TODO check v_n(orth) is valid, check 1 only
 
     co.vertices[co.w].n_marked_nbs = 2
     co.vertices[co.w].is_marked = True
-    co.vertices[co.w].ordered_number = co.k
-    update_neighbors_visited(G, co, co.w)
-    update_chords(G_c, co)
-    co.decrement_k()
+    co.vertices[co.w].ordered_number = co.n
+    # update_neighbors_visited(G, co, co.w)
+    # update_chords(G_c, co)
+    # co.decrement_k()
 
-    # no vertices will yet have up to two neighbors, so pick v_w
-    # TODO check (v_w is valid, check 1 and 2.1)
-    co.vertices[co.x].is_marked = True
-    co.vertices[co.w].ordered_number = co.k
-    update_neighbors_visited(G, co, co.x)
-    update_chords(G_c, co)
-    co.decrement_k()
+    # # no vertices will yet have up to two neighbors, so pick v_w
+    # # TODO check (v_w is valid, check 1 and 2.1)
+    # co.vertices[co.x].is_marked = True
+    # co.vertices[co.w].ordered_number = co.k
+    # update_neighbors_visited(G, co, co.x)
+    # update_chords(G_c, co)
+    # co.decrement_k()
 
-    # check the graph is ok at this point... 
+    # check the graph is ok at this point...
 
     # now should have 1 potential nb
+    # co.potential_vertices()
     assert len(co.potential_vertices()) == 1
 
     return G_c, co
@@ -75,27 +77,37 @@ def initialize_canonical_order(_G: nx.Graph, pos, full_pos):
 
 def iterate_canonical_order(G_c: G_canonical, co: CanonicalOrder):
     count = 0
-    while co.k > 4:
+    print(co.k, co.n)
+    while co.k < co.n:
         potential = co.potential_vertices()
         if len(potential) == 0:
             raise Exception(f"No potential vertices: {co.show_vertices()}")
         if len(potential) > 1:
-            raise Exception(
-                f"Multiple potential: {[i.name for i in potential]}. Would choose {potential[0].name}.  {co.show_vertices()}"
+            print(
+                f"Multiple potential: {[i.name for i in potential]}. Choosing {potential[0].name}"
             )
 
         vk = potential[0]
 
-        is_Gk_minus_1_biconnected(G_c.G, co)
-        are_u_v_in_Ck(G_c, co)
-        # TODO assert vk is valid
+        try:
+            co.vertices[vk.name].ordered_number = co.k
+            # test choice of vk produces valid graph..
+            is_Gk_minus_1_biconnected(G_c.G, co)
+            are_u_v_in_Ck(G_c, co)
+        except:
+            raise Exception(f"ordering {vk} failed..")
+        # TODO one more check!
+
         co.vertices[vk.name].is_marked = True
-        co.vertices[vk.name].ordered_number = co.k
+
         update_neighbors_visited(G_c.G, co, vk.name)
         update_chords(G_c, co)
-        co.decrement_k()
+        co.increment_k()
 
-        count+=1
+        count += 1
 
+        if count > 2:
+            print("breaking.. ")
+            break
 
     return G_c, co

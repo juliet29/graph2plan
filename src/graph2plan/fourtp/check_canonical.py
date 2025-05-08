@@ -6,11 +6,11 @@ import networkx as nx
 
 
 def is_Gk_minus_1_biconnected(G: nx.Graph, co: CanonicalOrder):
-    assert len(co.Gk_minus_1_nodes) >= 3, (
-        "Need at least three vertices to check biconnection"
-    )
-    Gk_minus_1 = G.subgraph(co.Gk_minus_1_nodes)
-    assert nx.is_biconnected(Gk_minus_1)
+    if len(co.Gk_minus_1_nodes) >= 3:
+        Gk_minus_1 = G.subgraph(co.Gk_minus_1_nodes)
+        assert nx.is_biconnected(Gk_minus_1)
+    else:
+        print(f"Skipping biconnection check, >=3 vertices in Gk-1, currently have {co.Gk_minus_1_nodes}")
 
 
 def are_u_v_in_Ck(G_c: G_canonical, co: CanonicalOrder):
@@ -18,7 +18,6 @@ def are_u_v_in_Ck(G_c: G_canonical, co: CanonicalOrder):
         co.u in co.Gk_nodes and co.v in co.Gk_nodes
     )  # TODO need to be in external face! need to calculate an embedding!
     print(f"outer face: {G_c.outer_face_at_k(co)}")
-
 
 
 def do_vk_nbs_form_2v_subinterval_in_Ck_minus_1():

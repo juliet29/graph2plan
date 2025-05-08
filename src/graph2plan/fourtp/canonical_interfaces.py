@@ -5,6 +5,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from pprint import pprint
 
+from graph2plan.fourtp.draw_four_complete import draw_four_complete_graph
 from graph2plan.fourtp.faces import get_embedding_of_four_complete_G, get_external_face
 from graph2plan.helpers.geometry_interfaces import VertexPositions
 from graph2plan.helpers.utils import set_difference
@@ -40,7 +41,7 @@ class CanonicalOrder:
     x: str  # "current node.." => v_w
     # n: int
     n: int  # number of vertices
-    k: int
+    k: int = 3
 
     # @property
     # def num_vertices(self):
@@ -50,9 +51,13 @@ class CanonicalOrder:
     # def curr_k(self):
     #     return self.k
 
-    def decrement_k(self):
-        self.k -= 1
+    def increment_k(self):
+        self.k += 1
         print(f"decrementing k from {self.k + 1} to {self.k}")
+
+    # def decrement_k(self):
+    #     self.k -= 1
+    #     print(f"decrementing k from {self.k + 1} to {self.k}")
 
     @property
     def unmarked(self):
@@ -106,3 +111,7 @@ class G_canonical:
         _embedding = deepcopy(self.embedding)
         _embedding.remove_nodes_from(nodes_to_remove)
         return get_external_face(_embedding, self.full_pos)
+
+    def draw(self, nodes_to_include: list):
+        G_to_draw = self.G.subgraph(nodes_to_include)
+        draw_four_complete_graph(G_to_draw, self.pos, self.full_pos)

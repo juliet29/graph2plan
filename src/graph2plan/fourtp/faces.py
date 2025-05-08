@@ -1,6 +1,9 @@
 from copy import deepcopy
+
+from networkx import NetworkXError, NetworkXException
 from graph2plan.dcel.original import create_embedding
 from graph2plan.dual.helpers import (
+    EmbeddingError,
     get_embedding_faces,
     split_cardinal_and_interior_edges,
 )
@@ -10,13 +13,12 @@ from graph2plan.helpers.geometry_interfaces import VertexPositions
 import networkx as nx
 
 
-# TODO this all goes elsewhere.. =>combine with dcel when simplify that.. 
+# TODO this all goes elsewhere.. =>combine with dcel when simplify that..
 
 
-# don't delete -> a helper / util fx.. actually can wrap with the earlier asserts.. 
+# don't delete -> a helper / util fx.. actually can wrap with the earlier asserts..
 def print_all_cw_nbs(PE: nx.PlanarEmbedding, node: str):
     print(f"cw nbs of {node}: {list(PE.neighbors_cw_order(node))}")
-
 
 
 def get_last_cw_nb(PE: nx.PlanarEmbedding, node: str):
@@ -43,11 +45,10 @@ def add_exterior_embed(_PE: nx.PlanarEmbedding):
     PE = add_cw_pair(PE, "v_e", "v_s")
     PE = add_cw_pair(PE, "v_s", "v_w")
     PE = add_cw_pair(PE, "v_w", "v_n")
-    PE = add_cw_pair(PE, "v_n", "v_s")  # think about this a bit...
+    PE = add_cw_pair(PE, "v_s", "v_n")  # think about this a bit...
     PE.check_structure()
 
     return PE
-
 
 
 def get_embedding_of_four_complete_G(G: nx.Graph, full_pos: VertexPositions):
@@ -56,16 +57,19 @@ def get_embedding_of_four_complete_G(G: nx.Graph, full_pos: VertexPositions):
     return add_exterior_embed(PE_interior)
 
 
-
 def get_external_face(PE: nx.PlanarEmbedding, full_pos: VertexPositions):
+    # try:
     faces = get_embedding_faces(PE)
-    # all faces should have length 3 or greater -> may want to generalize.. 
+    # except EmbeddingError:
+    #     try:
+    #         PE.check_structure()
+    #     except NetworkXException:
+
+    #         raise Exception("There is something wrong with the embedding..")
+    # all faces should have length 3 or greater -> may want to generalize..
+
     for face in faces:
         assert face.n_vertices >= 3, f"Face: {face} has less than 3 vertices!"
 
-
-    return sorted(faces, key=lambda x: x.get_area(full_pos), reverse=True)[0]
-
-
-
-
+    print()
+    # return sorted(faces, key=lambda x: x.get_signed_area(full_pos), reverse=True)[0]

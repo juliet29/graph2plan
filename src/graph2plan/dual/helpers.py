@@ -10,6 +10,9 @@ from graph2plan.helpers.graph_interfaces import (
     get_vertex_name,
 )
 
+class EmbeddingError(Exception):
+    pass
+
 
 def check_num_faces_is_correct(num_nodes, num_half_edges, num_faces):
     # print(f"num_faces: {num_faces}")
@@ -18,9 +21,9 @@ def check_num_faces_is_correct(num_nodes, num_half_edges, num_faces):
     try:
         assert num_nodes - num_edges + num_faces == 2
     except AssertionError:
-        print(
-            f"Error! nodes {num_nodes}, edges {num_edges} | faces={num_faces} != exp_faces={expected_faces}"
-        )
+        print(f"Did not get expected number of faces. Is the embedding correct? Nodes {num_nodes}, edges {num_edges} | faces={num_faces} != exp_faces={expected_faces}")
+        pass
+        
 
 
 def get_embedding_faces(G: nx.PlanarEmbedding):
@@ -38,6 +41,7 @@ def get_embedding_faces(G: nx.PlanarEmbedding):
                 # Mark all half-edges belonging to this face
                 new_face = G.traverse_face(v, w, counted_half_edges)
                 counted_faces.add(Face(new_face))
+
 
     check_num_faces_is_correct(G.order(), len(counted_half_edges), len(counted_faces))
 
