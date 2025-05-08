@@ -5,6 +5,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from pprint import pprint
 
+from graph2plan.dual.helpers import get_embedding_faces
 from graph2plan.fourtp.draw_four_complete import draw_four_complete_graph
 from graph2plan.fourtp.faces import get_embedding_of_four_complete_G, get_external_face
 from graph2plan.helpers.geometry_interfaces import VertexPositions
@@ -52,8 +53,8 @@ class CanonicalOrder:
     #     return self.k
 
     def increment_k(self):
+        print(f"incrementing k from {self.k} to {self.k + 1}")
         self.k += 1
-        print(f"decrementing k from {self.k + 1} to {self.k}")
 
     # def decrement_k(self):
     #     self.k -= 1
@@ -105,13 +106,32 @@ class G_canonical:
     def embedding(self):
         return get_embedding_of_four_complete_G(self.G, self.full_pos)
 
-    def outer_face_at_k(self, co: CanonicalOrder):
-        nodes_to_remove = set_difference(self.embedding.nodes, co.Gk_nodes)
+    def get_outer_face_of_nodes(self, nodes_to_keep: list, print_other_faces=False):
+        nodes_to_remove = set_difference(self.embedding.nodes, nodes_to_keep)
 
         _embedding = deepcopy(self.embedding)
         _embedding.remove_nodes_from(nodes_to_remove)
+        if print_other_faces:
+            other_faces = get_embedding_faces(_embedding)
+            print(f"==>> other_faces: {other_faces}")
+
         return get_external_face(_embedding, self.full_pos)
+
+    def outer_face_at_k(self, co: CanonicalOrder):
+        return self.get_outer_face_of_nodes(co.Gk_nodes)
+        # nodes_to_remove = set_difference(self.embedding.nodes, co.Gk_nodes)
+
+        # _embedding = deepcopy(self.embedding)
+        # _embedding.remove_nodes_from(nodes_to_remove)
+        # return get_external_face(_embedding, self.full_pos)
+
+    def outer_face_of_unmarked(self, co: CanonicalOrder):
+        return self.get_outer_face_of_nodes(co.unmarked, print_other_faces=True)
 
     def draw(self, nodes_to_include: list):
         G_to_draw = self.G.subgraph(nodes_to_include)
         draw_four_complete_graph(G_to_draw, self.pos, self.full_pos)
+
+
+class NotImplementedError(Exception):
+    pass

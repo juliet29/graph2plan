@@ -1,6 +1,6 @@
 from copy import deepcopy
 from graph2plan.fourtp.canonical_order import (
-    update_chords,
+    check_and_update_chords,
     initialize_canonical_order,
     iterate_canonical_order,
 )
@@ -13,6 +13,7 @@ from graph2plan.fourtp.four_complete import (
 from graph2plan.dual.helpers import get_embedding_faces
 from sympy import Point, Polygon
 from .faces import get_external_face
+from .canonical_interfaces import NotImplementedError
 
 
 def test_four_complete():
@@ -31,7 +32,13 @@ def test_co():
     full_pos = place_cardinal(pos, path_pairs)
     G_c, co = initialize_canonical_order(G, pos, full_pos)
     print("-----Initialization complete---")
-    G_c, co = iterate_canonical_order(G_c, co)
+    try:
+        G_c, co = iterate_canonical_order(G_c, co)
+    except NotImplementedError:
+        print("time to work on chords.. ")
+        return G_c, co
+
+        return G_c, co
     return G_c, co
 
 

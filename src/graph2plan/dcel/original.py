@@ -3,7 +3,7 @@ from networkx import NetworkXException, PlanarEmbedding
 from sympy import Line, N, Triangle
 
 from ..helpers.geometry_interfaces import T, VertexPositions
-from .interfaces import Edge, Edges, transform_graph_egdes
+from .interfaces import Edge, EdgeList, transform_graph_egdes
 
 
 def soft_check_structure(PG: nx.PlanarEmbedding):
@@ -68,7 +68,7 @@ def add_edge_with_reference(
 
 
 def handle_half_edge(
-    PG: PlanarEmbedding, pos: VertexPositions, edge_list: Edges, e: Edge[T]
+    PG: PlanarEmbedding, pos: VertexPositions, edge_list: EdgeList, e: Edge[T]
 ):
     if e.u not in PG.nodes:
         PG.add_half_edge_first(e.u, e.v)

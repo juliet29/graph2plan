@@ -58,17 +58,35 @@ def get_embedding_of_four_complete_G(G: nx.Graph, full_pos: VertexPositions):
 
 
 def get_external_face(PE: nx.PlanarEmbedding, full_pos: VertexPositions):
-    """ https://cs.stackexchange.com/questions/116518/given-a-dcel-how-do-you-identify-the-unbounded-face """
-    filtered_pos = {k:v for k,v in full_pos.items() if k in PE.nodes}
-    extreme_node = CoordinateList.name_extreme_coord(filtered_pos)
-    left_nb, right_nb = get_first_cw_nb(PE, extreme_node), get_last_cw_nb(PE, extreme_node)
-    
-    left_face = PE.traverse_face(left_nb, extreme_node)
-    right_face = PE.traverse_face(extreme_node, right_nb)
+    """ 
+    Assumptions: the graphs interior is triangulated, while the exterior may or may not be. Chords may or may not exist. In the ideal case where there are no chords and fully triangulated =>
+    https://cs.stackexchange.com/questions/116518/given-a-dcel-how-do-you-identify-the-unbounded-face """
 
-    assert set(left_face) == set(right_face)
+    # TODO better logic -> cant do if there are chords + fully triangulated.. 
+    all_faces = get_embedding_faces(PE)
+    triangular_faces = [len(face.vertices) == 3 for face in all_faces]
 
-    return left_face
+    if all(triangular_faces):
+        # use this approach if all faces are triangular 
+        filtered_pos = {k:v for k,v in full_pos.items() if k in PE.nodes}
+        extreme_node = CoordinateList.name_extreme_coord(filtered_pos)
+        left_nb, right_nb = get_first_cw_nb(PE, extreme_node), get_last_cw_nb(PE, extreme_node)
+        
+        left_face = PE.traverse_face(left_nb, extreme_node)
+        right_face = PE.traverse_face(extreme_node, right_nb)
+
+        assert set(left_face) == set(right_face)
+
+        return left_face
+    else:
+        external_faces = [i for i in all_faces if i.n_vertices > 3]
+        assert len(external_faces) == 1, f"Len of external faces > 1: {sorted(external_faces, key=lambda i: i.n_vertices)}"
+        # print(external_faces[0])
+        return external_faces[0].vertices
+
+
+
+    # if all faces are triangular except one, then non-triangulated is external 
 
 
 

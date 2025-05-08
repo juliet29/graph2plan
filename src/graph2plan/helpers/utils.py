@@ -1,5 +1,6 @@
 from itertools import chain, tee
 from typing import Iterable
+import networkx as nx
 
 
 def set_difference(a: Iterable, b: Iterable):
@@ -21,3 +22,9 @@ def get_unique_items_in_list_keep_order(seq):
     seen = set()
     seen_add = seen.add
     return [x for x in seq if not (x in seen or seen_add(x))]
+
+
+def neighborhood(G, node, n):
+    path_lengths = nx.single_source_dijkstra_path_length(G, node)
+    return [node for node, length in path_lengths.items()
+                    if length == n]

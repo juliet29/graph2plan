@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Generic, Literal, NamedTuple
+from typing import Any, Generic, Iterable, Literal, NamedTuple
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -33,7 +33,7 @@ class Edge(Generic[T]):
 
 
 @dataclass
-class Edges(Generic[T]):
+class EdgeList(Generic[T]):
     edges: list[Edge[T]]
 
     def get(self, u: T, v: T):
@@ -45,6 +45,12 @@ class Edges(Generic[T]):
         s = set(self.edges)
         assert len(s) == 0.5 * (len(self.edges))
         return s
+
+    @classmethod
+    def to_edge_list(cls, edges:Iterable):
+        return cls([Edge(*i) for i in edges])
+    
+
 
 
 # TODO move to utils..
@@ -63,7 +69,7 @@ def transform_graph_egdes(G: nx.Graph):
         all_edges.append(Edge(e[1], e[0], ix, 2))
         ix += 1
 
-    return Edges(all_edges)
+    return EdgeList(all_edges)
 
 
 class EmbedResult(NamedTuple):

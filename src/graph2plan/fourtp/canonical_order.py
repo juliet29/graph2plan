@@ -1,13 +1,18 @@
 from copy import deepcopy
 from typing import Union
 import networkx as nx
+
+from graph2plan.dcel.interfaces import EdgeList
+from graph2plan.helpers.utils import neighborhood
 from .check_canonical import is_Gk_minus_1_biconnected, are_u_v_in_Ck
 
 
 from graph2plan.fourtp.canonical_interfaces import (
     CanonicalOrder,
     G_canonical,
+    NotImplementedError,
     VertexData,
+    set_difference,
 )
 from .draw_four_complete import draw_four_complete_graph
 from ..dcel.original import create_embedding
@@ -22,13 +27,57 @@ def update_neighbors_visited(G: nx.Graph, co: CanonicalOrder, vertex_name):
         co.vertices[nb].n_marked_nbs += 1
 
 
-def update_chords(G_c: G_canonical, co: CanonicalOrder):
+def first_and_second_nbs(G, node):
+    # this is an unfiltered G
+    return neighborhood(G, node, 1) + neighborhood(G, node, 2)
+
+
+def find_chords(G_c: G_canonical, co: CanonicalOrder):
+    C_unmarked = nx.cycle_graph(G_c.outer_face_of_unmarked(co), nx.Graph)
+
+    G_unmarked = G_c.G.subgraph(co.unmarked)
+    # only care about nodes that are on the outer cycle
+    G_unmarked_cyle_nodes = G_unmarked.subgraph(C_unmarked.nodes)
+
+    chords = set_difference(
+        EdgeList.to_edge_list(G_unmarked_cyle_nodes.edges).edges,
+        EdgeList.to_edge_list(C_unmarked.edges).edges,
+    )
+
+    return [e.pair for e in chords]
+
+
+def update_chords(G_c: G_canonical, co: CanonicalOrder, node):
+    nbs = first_and_second_nbs(G_c.G, node) # that are unmarked
+    unmarked_nbs = [nb for nb in nbs if not co.vertices[nb].is_marked]
+    chords = find_chords(G_c, co)
+    # set all chords of relevant nbs to 0
+    for nb in nbs:
+        co.vertices[nb].n_chords = 0
+    
+    # then update as they come up in edges.. 
+    for chord in chords:
+        for vertex in chord:
+            if vertex in unmarked_nbs:
+                co.vertices[vertex].n_chords +=1
+
+    non_zero_chords = [i for i in co.vertices.values() if i.n_chords > 0]
+    print(f"==>> non_zero_chords: {non_zero_chords}")
+
+
+def check_and_update_chords(G_c: G_canonical, co: CanonicalOrder, node):
     G_unmarked = G_c.G.subgraph(co.unmarked)
     if nx.is_chordal(G_unmarked):
         G_c.draw(co.unmarked)
+        print(f"outer face of unmarked: {G_c.outer_face_of_unmarked(co)}")
+        update_chords(G_c, co, node)
+        
+
         # draw_four_complete_graph(G_unmarked, G_c.pos, G_c.full_pos)
-        raise Exception("Haven't handled chordal graph! ")
+        # raise NotImplementedError("Haven't handled chordal graph! ")
+
         # TODO -> update the co.chords variable for each node and all its nbs
+        # also reflect fact that some may have 0 chords..
     # otherwise do nothing..
 
 
@@ -95,13 +144,13 @@ def iterate_canonical_order(G_c: G_canonical, co: CanonicalOrder):
             is_Gk_minus_1_biconnected(G_c.G, co)
             are_u_v_in_Ck(G_c, co)
         except:
-            raise Exception(f"ordering {vk} failed..")
+            raise Exception(f"ordering {vk.name} failed..")
         # TODO one more check!
 
         co.vertices[vk.name].is_marked = True
 
         update_neighbors_visited(G_c.G, co, vk.name)
-        update_chords(G_c, co)
+        check_and_update_chords(G_c, co, vk)
         co.increment_k()
 
         count += 1
