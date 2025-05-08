@@ -7,7 +7,7 @@ from graph2plan.dual.helpers import (
     get_embedding_faces,
     split_cardinal_and_interior_edges,
 )
-from graph2plan.helpers.geometry_interfaces import VertexPositions
+from graph2plan.helpers.geometry_interfaces import VertexPositions, CoordinateList
 
 
 import networkx as nx
@@ -58,18 +58,35 @@ def get_embedding_of_four_complete_G(G: nx.Graph, full_pos: VertexPositions):
 
 
 def get_external_face(PE: nx.PlanarEmbedding, full_pos: VertexPositions):
+    """ https://cs.stackexchange.com/questions/116518/given-a-dcel-how-do-you-identify-the-unbounded-face """
+    filtered_pos = {k:v for k,v in full_pos.items() if k in PE.nodes}
+    extreme_node = CoordinateList.name_extreme_coord(filtered_pos)
+    left_nb, right_nb = get_first_cw_nb(PE, extreme_node), get_last_cw_nb(PE, extreme_node)
+    
+    left_face = PE.traverse_face(left_nb, extreme_node)
+    right_face = PE.traverse_face(extreme_node, right_nb)
+
+    assert set(left_face) == set(right_face)
+
+    return left_face
+
+
+
+
+
+
     # try:
-    faces = get_embedding_faces(PE)
-    # except EmbeddingError:
-    #     try:
-    #         PE.check_structure()
-    #     except NetworkXException:
+    # faces = get_embedding_faces(PE)
+    # # except EmbeddingError:
+    # #     try:
+    # #         PE.check_structure()
+    # #     except NetworkXException:
 
-    #         raise Exception("There is something wrong with the embedding..")
-    # all faces should have length 3 or greater -> may want to generalize..
+    # #         raise Exception("There is something wrong with the embedding..")
+    # # all faces should have length 3 or greater -> may want to generalize..
 
-    for face in faces:
-        assert face.n_vertices >= 3, f"Face: {face} has less than 3 vertices!"
+    # for face in faces:
+    #     assert face.n_vertices >= 3, f"Face: {face} has less than 3 vertices!"
 
     print()
     # return sorted(faces, key=lambda x: x.get_signed_area(full_pos), reverse=True)[0]
