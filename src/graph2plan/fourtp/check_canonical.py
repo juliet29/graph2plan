@@ -7,13 +7,13 @@ import networkx as nx
 
 
 def is_Gk_minus_1_biconnected(G: nx.Graph, co: CanonicalOrder):
-    if len(co.Gk_minus_1_nodes) >= 3:
-        Gk_minus_1 = G.subgraph(co.Gk_minus_1_nodes)
+    if len(co.Gk_minus_1_nodes()) >= 3:
+        Gk_minus_1 = G.subgraph(co.Gk_minus_1_nodes())
         if not nx.is_biconnected(Gk_minus_1):
             raise CanonicalOrderingFailure
     else:
         print(
-            f">>Biconnection check: Skipping, < 3 vertices in Gk-1, currently have {co.Gk_minus_1_nodes}..."
+            f">>Biconnection check: Skipping, < 3 vertices in Gk-1, currently have {co.Gk_minus_1_nodes()}..."
         )
         return
 

@@ -58,12 +58,14 @@ class CanonicalOrder:
             if i.ordered_number > 0 and i.ordered_number <= self.k
         ]
 
-    @property
-    def Gk_minus_1_nodes(self):
+    # @property # TODO this could cause an error 5/12/25..
+    def Gk_minus_1_nodes(self, k=None):
+        if not k:
+            k = self.k
         return [
             i.name
             for i in self.vertices.values()
-            if i.ordered_number > 0 and i.ordered_number < self.k
+            if i.ordered_number > 0 and i.ordered_number < k
         ]
 
     @property
@@ -71,7 +73,7 @@ class CanonicalOrder:
         return [
             i.name
             for i in self.vertices.values()
-            if i.name not in self.Gk_minus_1_nodes
+            if i.name not in self.Gk_minus_1_nodes()
         ]
 
     def increment_k(self):
@@ -121,8 +123,8 @@ class G_canonical:
     def outer_face_at_k(self, co: CanonicalOrder):
         return self.get_outer_face_of_nodes(co.Gk_nodes)
 
-    def outer_face_at_k_minus_1(self, co: CanonicalOrder):
-        return self.get_outer_face_of_nodes(co.Gk_minus_1_nodes)
+    def outer_face_at_k_minus_1(self, co: CanonicalOrder, k=None):
+        return self.get_outer_face_of_nodes(co.Gk_minus_1_nodes(k))
 
     def outer_face_of_unmarked(self, co: CanonicalOrder):
         return self.get_outer_face_of_nodes(co.unmarked, print_other_faces=False)

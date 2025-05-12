@@ -1,22 +1,17 @@
 from copy import deepcopy
-from math import e
-from typing import Union
+
 import networkx as nx
 
 from graph2plan.dcel.interfaces import CanonicalOrderingFailure, EdgeList
-from graph2plan.helpers.utils import neighborhood
-from .check_canonical import is_Gk_minus_1_biconnected, are_u_v_in_Ck, vk_permits_valid_order
-
-
 from graph2plan.fourtp.canonical_interfaces import (
     CanonicalOrder,
     G_canonical,
-    NotImplementedError,
     VertexData,
     set_difference,
 )
-from .draw_four_complete import draw_four_complete_graph
-from ..dcel.original import create_embedding
+from graph2plan.helpers.utils import neighborhood
+
+from .check_canonical import vk_permits_valid_order
 
 
 def update_neighbors_visited(G: nx.Graph, co: CanonicalOrder, vertex_name):
@@ -28,6 +23,7 @@ def update_neighbors_visited(G: nx.Graph, co: CanonicalOrder, vertex_name):
         co.vertices[nb].n_marked_nbs += 1
 
 
+# TODO move chords stuff elsewehere.. 
 def first_and_second_nbs(G, node):
     # this is an unfiltered G
     return neighborhood(G, node, 1) + neighborhood(G, node, 2)
@@ -63,17 +59,17 @@ def update_chords(G_c: G_canonical, co: CanonicalOrder, node: str):
             if vertex in unmarked_nbs:
                 co.vertices[vertex].n_chords += 1
 
-    non_zero_chords = {
-        i.name: i.n_chords for i in co.vertices.values() if i.n_chords > 0
-    }
-    print(f"==>> non_zero_chords: {non_zero_chords}")
+    # non_zero_chords = {
+    #     i.name: i.n_chords for i in co.vertices.values() if i.n_chords > 0
+    # }
+    # print(f"==>> non_zero_chords: {non_zero_chords}")
 
 
 def check_and_update_chords(G_c: G_canonical, co: CanonicalOrder, node: str):
     G_unmarked = G_c.G.subgraph(co.unmarked)
     if nx.is_chordal(G_unmarked):
         # G_c.draw(co.unmarked)
-        print(f"outer face of unmarked: {G_c.outer_face_of_unmarked(co)}")
+        # print(f"outer face of unmarked: {G_c.outer_face_of_unmarked(co)}")
         update_chords(G_c, co, node)
 
 
@@ -115,22 +111,13 @@ def iterate_canonical_order(G_c: G_canonical, co: CanonicalOrder):
             )
 
         vk = potential[0]
-
-
-        # TODO make another loop to check all the tests..
-
         try:
             co.vertices[vk.name].ordered_number = co.k
             vk_permits_valid_order(G_c, co, vk.name)
-            # test choice of vk produces valid graph..
-            # is_Gk_minus_1_biconnected(G_c.G, co)
-            # are_u_v_in_Ck(G_c, co)
         except CanonicalOrderingFailure:
             G_c.draw(co.unmarked)
             co.show_vertices()
-            raise Exception(f"While iterating, ordering {vk.name} failed..")
-            # TODO breadth-first search? shouldnt be nessecary bc they prove an ordering always exists...
-        # TODO two more checks => has two neighbors in G - Gk-1, and neighbors form path in marked
+            raise Exception(f"While iterating, ordering {vk.name} failed.. time to try breadth-first search?")
 
         co.vertices[vk.name].is_marked = True
 

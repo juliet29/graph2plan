@@ -1,19 +1,23 @@
+import functools
 from copy import deepcopy
-from graph2plan.fourtp.canonical_order import (
-    check_and_update_chords,
+
+import test
+
+from graph2plan.dual.helpers import get_embedding_faces
+
+from .canonical_order import (
     initialize_canonical_order,
     iterate_canonical_order,
 )
-from graph2plan.fourtp.draw_four_complete import draw_four_complete_graph
-from graph2plan.fourtp.examples import kk85, kk85_outer_face
-from graph2plan.fourtp.four_complete import (
+from .draw_four_complete import draw_four_complete_graph
+from .examples import kk85, kk85_outer_face
+from .faces import get_external_face
+from .four_complete import (
     four_complete,
     place_cardinal,
 )
-from graph2plan.dual.helpers import get_embedding_faces
-from sympy import Point, Polygon
-from .faces import get_external_face
-from .canonical_interfaces import NotImplementedError
+from .canonical_interfaces import G_canonical, CanonicalOrder
+from .rel import find_rel_edges, find_rel_points, initialize_rel_graph, create_rel
 
 
 def test_four_complete():
@@ -26,6 +30,7 @@ def test_four_complete():
     return G, pos, full_pos
 
 
+@functools.lru_cache
 def test_co():
     G, pos = kk85()
     G, path_pairs = four_complete(G, kk85_outer_face())
@@ -35,6 +40,16 @@ def test_co():
 
     G_c, co = iterate_canonical_order(G_c, co)
     return G_c, co
+
+
+def test_rel():
+    G_c, co = test_co()
+    G4 = create_rel(G_c, co)
+    # G2 = initialize_rel_graph(G_c.G)
+    # G3 = find_rel_edges(G2, co, "v1")
+    # G4 = find_rel_points(G_c, G2, co, "v1")
+    return G4
+
 
 
 
