@@ -151,3 +151,6 @@ cardinal_directions: dict[CardinalDirectionEnum, CardinalDirectionData] = {
 
 def get_vertex_name(drn: CardinalDirectionEnum):
     return cardinal_directions[drn].vertex_name
+
+def get_exterior_names():
+    return [cardinal_directions[drn].vertex_name for drn in CardinalDirectionEnum]

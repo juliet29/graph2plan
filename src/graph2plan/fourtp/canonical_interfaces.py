@@ -42,6 +42,9 @@ class CanonicalOrder:
     n: int  # number of vertices
     k: int = 3
 
+    def __hash__(self) -> int:
+        return hash(((i.name, i.ordered_number) for i in self.vertices.values()))
+
     @property
     def unmarked(self):
         return [i.name for i in self.vertices.values() if not i.is_marked]
@@ -104,6 +107,9 @@ class G_canonical:
     G: nx.Graph  # should be undirected..
     pos: VertexPositions  # should be put to be one..
     full_pos: VertexPositions
+
+    def __hash__(self) -> int:
+        return hash(self.G)
 
     @property
     def embedding(self):

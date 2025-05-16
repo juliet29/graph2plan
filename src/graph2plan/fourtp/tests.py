@@ -17,7 +17,7 @@ from .four_complete import (
     place_cardinal,
 )
 from .canonical_interfaces import G_canonical, CanonicalOrder
-from .rel import find_rel_edges, find_rel_points, initialize_rel_graph, create_rel
+from .rel import extract_graphs, find_rel_edges, find_rel_points, initialize_rel_graph, create_rel, plot_rel
 
 
 def test_four_complete():
@@ -45,10 +45,12 @@ def test_co():
 def test_rel():
     G_c, co = test_co()
     G4 = create_rel(G_c, co)
+    T1, T2 = extract_graphs(G4)
+    plot_rel(G4, T1, T2, G_c.full_pos, co)
     # G2 = initialize_rel_graph(G_c.G)
     # G3 = find_rel_edges(G2, co, "v1")
     # G4 = find_rel_points(G_c, G2, co, "v1")
-    return G4
+    return T1, T2
 
 
 
