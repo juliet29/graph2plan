@@ -1,7 +1,7 @@
 from copy import deepcopy
 
 
-from graph2plan.dual.helpers import get_embedding_faces
+from graph2plan.dual.helpers import check_is_source_target_graph, get_embedding_faces
 from graph2plan.fourtp.canonical_interfaces import G_canonical, CanonicalOrder
 
 from .canonical_order import (
@@ -15,6 +15,7 @@ from .four_complete import (
     four_complete,
     place_cardinal,
 )
+from graph2plan.dcel.external import fully_embed_graph
 
 # from .rel import CanonicalOrder, extract_graphs, create_rel
 import pickle
@@ -84,14 +85,6 @@ def test_init_rel():
 
     Ginit = initialize_rel_graph(G_c.G, co)
     plot_rel_base_graph(Ginit, G_c.full_pos, co)
-
-    # G4 = create_rel(G_c, co)
-    # T1, T2 = extract_graphs(G4)
-
-    # G2 = initialize_rel_graph(G_c.G)
-    # G3 = find_rel_edges(G2, co, "v1")
-    # G4 = find_rel_points(G_c, G2, co, "v1")
-    # G4, T1, T2, G_c, co
     return Ginit
 
 
@@ -100,8 +93,18 @@ def test_assign_rel():
     Grel = create_rel(G_c.G, co, G_c.embedding)
     T1, T2 = extract_graphs(Grel)
     plot_rel_base_graph(Grel, G_c.full_pos, co, (T1, T2))
-    return Grel, T1, T2
+    check_is_source_target_graph(T1)
+    check_is_source_target_graph(T2)
+    return Grel, T1, T2, G_c.full_pos
     # assign_rel_values_for_node(Ginit, G_c.embedding, co, "v3")
+
+def test_dual_creation():
+    Grel, T1, T2, pos = test_assign_rel()
+    res1 = fully_embed_graph(T1, pos, "x")
+    # TODO may have errors because of orientation.. 
+    #
+    return res1
+
 
 
 def test_external_face():

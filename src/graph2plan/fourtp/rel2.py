@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from matplotlib import pyplot as plt
 from matplotlib.lines import Line2D
 
+from graph2plan.dual.helpers import check_is_source_target_graph
 from graph2plan.fourtp.canonical_interfaces import CanonicalOrder
 from graph2plan.helpers.geometry_interfaces import VertexPositions
 
@@ -119,8 +120,49 @@ def create_rel(_G: nx.Graph, co: CanonicalOrder, embedding: nx.PlanarEmbedding):
 
     return Ginit
 
+def assign_missing_edges(_G:nx.DiGraph, T1: nx.DiGraph, T2: nx.DiGraph):
+    G = deepcopy(_G)
+    G.remove_edge(u="v_s", v="v_e")
+    G.remove_edge(u="v_s", v="v_w")
+    G.remove_edge(u="v_e", v="v_n")
+    G.remove_edge(u="v_w", v="v_n")
+    # TODO this assumes that the REL only applies to interior nodes, but further testing will determine if this is wrong.. 
+    # find nodes not in T1 or in T2
+    Gdiff = nx.difference(G, nx.compose(T1, T2))
+    if not Gdiff.edges:
+        print("No missing edges")
+        return T1, T2
+    
+    for u,v in Gdiff.edges:
+        assert u in ["v_s", "v_w"] or v in ["v_n", "v_e"], f"Invalid missing edges! {Gdiff.edges}"
+        match u:
+            case "v_s":
+                T1.add_edge(u, v)
+                continue
+            case "v_w":
+                T2.add_edge(u, v)
+                continue
+            case _:
+                pass
+        print(f"couldnt match u {u}, so trying to match v {v}")
+        match v:
+            case "v_n":
+                T1.add_edge(u, v)
+                continue
+            case "v_e":
+                T2.add_edge(u, v)
+                continue
+            case _:
+                pass
+        
+    return T1, T2
 
-def extract_graphs(Ginit: nx.Graph):
+    # for outer_node in ["v_s", "v_w","v_n", "v_e"]
+
+
+
+
+def extract_graphs(Ginit: nx.DiGraph):
     T1 = nx.DiGraph()
     T2 = nx.DiGraph()
     # exterior_names = get_exterior_names()
@@ -141,8 +183,11 @@ def extract_graphs(Ginit: nx.Graph):
                 T2.add_edge(res.basis_edge, node, basis=True)
             else:
                 default_graph.add_edge(res.basis_edge, node, basis=True)
+    T1, T2 = assign_missing_edges(Ginit, T1, T2)
 
     return T1, T2
+
+
 
 
 def plot_ordered_nodes(G: nx.Graph, pos: VertexPositions, co: CanonicalOrder, ax: Axes):
