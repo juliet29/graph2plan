@@ -1,5 +1,7 @@
 from copy import deepcopy
+import functools
 
+from matplotlib import pyplot as plt
 import networkx as nx
 
 from graph2plan.dcel.interfaces import CanonicalOrderingFailure, EdgeList
@@ -9,6 +11,7 @@ from graph2plan.fourtp.canonical_interfaces import (
     VertexData,
     set_difference,
 )
+from graph2plan.helpers.geometry_interfaces import VertexPositions
 from graph2plan.helpers.utils import neighborhood
 
 from .check_canonical import vk_permits_valid_order
@@ -79,7 +82,7 @@ def initialize_canonical_order(_G: nx.Graph, pos, full_pos):
     G = deepcopy(_G).to_undirected()
     G_c = G_canonical(G, pos, full_pos)
     vertices = {i: VertexData(i) for i in G.nodes}
-    co = CanonicalOrder(vertices, u="v_s", v="v_e", w="v_n", n=G.order())
+    co = CanonicalOrder(vertices, u="v_w", v="v_s", w="v_n", n=G.order())
 
     # mark and order the starting nodes, but dont update their nbs
     for ix, node in enumerate([co.u, co.v]):
@@ -95,7 +98,7 @@ def initialize_canonical_order(_G: nx.Graph, pos, full_pos):
 
     return G_c, co
 
-
+@functools.lru_cache
 def iterate_canonical_order(G_c: G_canonical, co: CanonicalOrder):
     count = 0
     print(co.k, co.n)
@@ -136,3 +139,5 @@ def iterate_canonical_order(G_c: G_canonical, co: CanonicalOrder):
     co.vertices[vk].ordered_number = co.k 
 
     return G_c, co
+
+

@@ -6,10 +6,11 @@ from dataclasses import dataclass
 from pprint import pprint
 
 from graph2plan.dual.helpers import get_embedding_faces
-from graph2plan.fourtp.draw_four_complete import draw_four_complete_graph
+from graph2plan.fourtp.draw_four_complete import compute_and_draw_edges, draw_four_complete_graph
 from graph2plan.fourtp.faces import get_embedding_of_four_complete_G, get_external_face
 from graph2plan.helpers.geometry_interfaces import VertexPositions
 from graph2plan.helpers.utils import set_difference
+import matplotlib.pyplot as plt
 
 import networkx as nx
 
@@ -43,7 +44,7 @@ class CanonicalOrder:
     k: int = 3
 
     def __hash__(self) -> int:
-        return hash(((i.name, i.ordered_number) for i in self.vertices.values()))
+        return hash(frozenset((i.name, i.ordered_number) for i in self.vertices.values()))
 
     @property
     def unmarked(self):
@@ -138,6 +139,17 @@ class G_canonical:
     def draw(self, nodes_to_include: list):
         G_to_draw = self.G.subgraph(nodes_to_include)
         draw_four_complete_graph(G_to_draw, self.pos, self.full_pos)
+
+    def draw_co(self, co: CanonicalOrder):
+        fig, ax = plt.subplots(1, 1)
+        compute_and_draw_edges(self.G, self.pos, self.full_pos, ax)
+        nx.draw_networkx_nodes(self.G, self.full_pos, ax=ax, node_size=400, node_shape="s")
+        nx.draw_networkx_labels(self.G, self.full_pos, ax=ax, labels={n:f"{co.vertices[n].ordered_number}\n({n})" for n in self.G.nodes}, font_size=8)
+        # nx.draw_networkx_edges(self.G, self.full_pos, ax=ax)
+        plt.show()
+
+
+        
 
 
 class NotImplementedError(Exception):

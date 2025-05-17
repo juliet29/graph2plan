@@ -1,9 +1,8 @@
-import functools
 from copy import deepcopy
 
-import test
 
 from graph2plan.dual.helpers import get_embedding_faces
+from graph2plan.fourtp.canonical_interfaces import G_canonical
 
 from .canonical_order import (
     initialize_canonical_order,
@@ -16,9 +15,9 @@ from .four_complete import (
     four_complete,
     place_cardinal,
 )
-from .canonical_interfaces import G_canonical, CanonicalOrder
-from .rel import extract_graphs, find_rel_edges, find_rel_points, initialize_rel_graph, create_rel, plot_rel
-
+from .rel import CanonicalOrder, extract_graphs, create_rel
+import pickle
+from ..constants import BASE_PATH
 
 def test_four_complete():
     G, pos = kk85()
@@ -30,7 +29,7 @@ def test_four_complete():
     return G, pos, full_pos
 
 
-@functools.lru_cache
+
 def test_co():
     G, pos = kk85()
     G, path_pairs = four_complete(G, kk85_outer_face())
@@ -41,16 +40,34 @@ def test_co():
     G_c, co = iterate_canonical_order(G_c, co)
     return G_c, co
 
+def pickle_co():
+    G_c, co = test_co()
+    with open(BASE_PATH / "pickles/co.pickle", 'wb') as handle:
+        pickle.dump([G_c, co], handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+
+def show_co():
+    with open(BASE_PATH / "pickles/co.pickle", 'rb') as handle:
+            r1, r2 = pickle.load(handle)
+    G_c: G_canonical = r1
+    co: CanonicalOrder = r2
+    G_c.G.remove_edge(u="v_n", v="v_s")
+    G_c.draw_co(co)
+    # plot_canonical_order(G_c.G, G_c.full_pos, co)
+
+
 
 def test_rel():
-    G_c, co = test_co()
+    # G_c, co = test_co()
+    with open(BASE_PATH / "pickles/co.pickle", 'rb') as handle:
+        G_c, co = pickle.load(handle)
     G4 = create_rel(G_c, co)
     T1, T2 = extract_graphs(G4)
-    plot_rel(G4, T1, T2, G_c.full_pos, co)
+
     # G2 = initialize_rel_graph(G_c.G)
     # G3 = find_rel_edges(G2, co, "v1")
     # G4 = find_rel_points(G_c, G2, co, "v1")
-    return T1, T2
+    return G4, T1, T2, G_c, co
 
 
 

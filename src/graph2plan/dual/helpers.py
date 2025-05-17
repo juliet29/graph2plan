@@ -69,7 +69,7 @@ def check_correct_n_faces_in_edge_face_dict(edge_face_dict: EdgeFaceDict[T]):
 def check_is_source_target_graph(G: nx.DiGraph, show=False):
     sources = [x for x in G.nodes() if G.in_degree(x) == 0]
     targets = [x for x in G.nodes() if G.out_degree(x) == 0]
-    assert len(sources) == 1 and len(targets) == 1
+    assert len(sources) == 1 and len(targets) == 1, f"sources: {sources} | targets: {targets}"
     # further, check that all nodes are touched o n paths from s to t..
     if show:
         print(f"==>> sources: {sources}")

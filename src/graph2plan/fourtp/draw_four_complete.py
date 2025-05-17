@@ -43,7 +43,9 @@ def compute_and_draw_edges(G, pos, full_pos, ax):
 
 
 def draw_four_complete_graph(G, pos, full_pos, nodelist=None, fig_label=""):
-    _, ax = plt.subplots(1, 1)
+    fig, ax = plt.subplots(1, 1)
     compute_and_draw_edges(G, pos, full_pos, ax)
     nx.draw_networkx_nodes(G, full_pos, ax=ax, nodelist=nodelist)
     nx.draw_networkx_labels(G, full_pos, ax=ax)
+
+    return ax
