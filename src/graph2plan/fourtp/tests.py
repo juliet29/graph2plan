@@ -102,10 +102,10 @@ def test_assign_rel():
 
 def test_dual_creation():
     Grel, T1, T2, pos = test_assign_rel()
-    res1 = fully_embed_graph(T1, pos, "x")
-    res2 = fully_embed_graph(T2, pos, "y")
-    x_domains = create_dual_and_calculate_domains(res1, "x", True)
-    y_domains = create_dual_and_calculate_domains(res2, "y", True)
+    res1 = fully_embed_graph(T1, pos, "y")
+    res2 = fully_embed_graph(T2, pos, "x")
+    x_domains = create_dual_and_calculate_domains(res1, "y", True)
+    y_domains = create_dual_and_calculate_domains(res2, "x", True)
     # TODO may have errors because of orientation.. 
     merged_doms = merge_domains(x_domains, y_domains)
     merged_doms.draw()
