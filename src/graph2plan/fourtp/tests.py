@@ -1,6 +1,8 @@
 from copy import deepcopy
 
 
+from graph2plan.dual.create_domains import merge_domains
+from graph2plan.dual.create_rectangle import create_dual_and_calculate_domains
 from graph2plan.dual.helpers import check_is_source_target_graph, get_embedding_faces
 from graph2plan.fourtp.canonical_interfaces import G_canonical, CanonicalOrder
 
@@ -101,9 +103,14 @@ def test_assign_rel():
 def test_dual_creation():
     Grel, T1, T2, pos = test_assign_rel()
     res1 = fully_embed_graph(T1, pos, "x")
+    res2 = fully_embed_graph(T2, pos, "y")
+    x_domains = create_dual_and_calculate_domains(res1, "x", True)
+    y_domains = create_dual_and_calculate_domains(res2, "y", True)
     # TODO may have errors because of orientation.. 
+    merged_doms = merge_domains(x_domains, y_domains)
+    merged_doms.draw()
     #
-    return res1
+    return merged_doms
 
 
 
