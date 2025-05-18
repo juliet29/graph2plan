@@ -1,3 +1,4 @@
+from collections import deque
 import networkx as nx
 import random
 from typing import Literal, NamedTuple
@@ -39,8 +40,11 @@ def choose_alphas(outer_face: list[T]):
     assert (
         len(outer_face) >= N_NODES
     )  # TODO adress the case when there are three.. / deal with case of max assigning two alphas to a node on external boundary..
+    # also think  about the case for two and one.. 
     selected_nodes = sorted(random.sample(outer_face, N_NODES), key=outer_face.index)
     return {alpha: node for alpha, node in zip(Alphas, selected_nodes)}
+
+
 
 
 class CardinalPath(NamedTuple):
@@ -60,7 +64,25 @@ def check_paths_are_correct(G_cycle: nx.DiGraph, path_pairs: list[CardinalPath])
     assert nx.is_simple_path(G_cycle, joint_path)
 
 
-def find_paths(G_cycle: nx.DiGraph, alpha_node_mapping: dict[Alphas, T]):
+def orient_paths(pos: VertexPositions, path_pairs: list[CardinalPath]):
+    def get_path_y(path):
+        path_points = [pos[i] for i in path]
+        path_centroid = shp.MultiPoint(path_points).centroid
+        return path_centroid.y
+    
+    south_path = sorted(path_pairs, key=lambda p: get_path_y(p.path))[0]
+    south_path_ix = path_pairs.index(south_path)
+
+    vertex_order = deque([p.drn for p in path_pairs])
+    while vertex_order.index(CDE.SOUTH) != south_path_ix:
+        vertex_order.rotate(1)
+
+    original_paths = [p.path for p in path_pairs]
+
+    return [CardinalPath(drn, path) for drn, path in zip(vertex_order, original_paths)]
+
+
+def find_paths(G_cycle: nx.DiGraph, pos: VertexPositions, alpha_node_mapping: dict[Alphas, T]):
     def find_card_drn_path(drn):
         alpha1, alpha2 = alpha_mapping[drn]
         node1 = alpha_node_mapping[alpha1]
@@ -71,17 +93,20 @@ def find_paths(G_cycle: nx.DiGraph, alpha_node_mapping: dict[Alphas, T]):
     path_pairs = [find_card_drn_path(drn) for drn in CDE]
 
     check_paths_are_correct(G_cycle, path_pairs)
+
+    path_pairs = orient_paths(pos, path_pairs)
     # pprint(path_pairs)
 
     return path_pairs
 
 
-def four_complete(_G: nx.Graph, outer_face):
+def four_complete(_G: nx.Graph, pos:VertexPositions,  outer_face):
     alpha_node_mapping = choose_alphas(outer_face)
     # print({k.name: v for k, v in alpha_node_mapping.items()})
 
     G_cycle = nx.cycle_graph(outer_face, nx.DiGraph)
-    path_pairs = find_paths(G_cycle, alpha_node_mapping)
+    path_pairs = find_paths(G_cycle, pos, alpha_node_mapping)
+    # can find the path that is most south, and assign that to be south, then move other along .. 
 
     G = deepcopy(_G)
     for pair in path_pairs:
@@ -96,6 +121,7 @@ def four_complete(_G: nx.Graph, outer_face):
             )
 
     # TODO at this point, distinguish between interior and exterior edges.. with an attribute.. 
+    # should just have these edges as a list saved somewhere.. 
     G.add_edge(get_vertex_name(CDE.SOUTH), get_vertex_name(CDE.EAST))
     G.add_edge(get_vertex_name(CDE.SOUTH), get_vertex_name(CDE.WEST))
     G.add_edge(get_vertex_name(CDE.WEST), get_vertex_name(CDE.NORTH))

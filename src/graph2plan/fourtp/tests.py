@@ -26,12 +26,12 @@ from .rel2 import (
     create_rel,
     extract_graphs
 )
-import networkx as nx
+
 
 
 def test_four_complete():
     G, pos = kk85()
-    G, path_pairs = four_complete(G, kk85_outer_face())
+    G, path_pairs = four_complete(G, pos, kk85_outer_face())
     full_pos = place_cardinal(pos, path_pairs)
 
     draw_four_complete_graph(G, pos, full_pos)
@@ -41,7 +41,7 @@ def test_four_complete():
 
 def test_co():
     G, pos = kk85()
-    G, path_pairs = four_complete(G, kk85_outer_face())
+    G, path_pairs = four_complete(G, pos, kk85_outer_face())
     full_pos = place_cardinal(pos, path_pairs)
     G_c, co = initialize_canonical_order(G, pos, full_pos)
     print("-----Initialization complete---")
@@ -109,7 +109,7 @@ def test_dual_creation():
 
 def test_external_face():
     G, pos = kk85()
-    G, path_pairs = four_complete(G, kk85_outer_face())
+    G, path_pairs = four_complete(G, pos, kk85_outer_face())
     full_pos = place_cardinal(pos, path_pairs)
     G_c, co = initialize_canonical_order(G, pos, full_pos)
 
