@@ -2,34 +2,34 @@
 import pickle
 from copy import deepcopy
 
-from graph2plan.canonical.canonical_interfaces import (
+from ..canonical.canonical_interfaces import (
     CanonicalOrder,
     G_canonical,
     read_canonical_outputs,
+    write_canonical_outputs
 )
-from graph2plan.dcel.external import fully_embed_graph
-from graph2plan.dual.create_domains import merge_domains
-from graph2plan.dual.create_rectangle import create_dual_and_calculate_domains
-from graph2plan.dual.helpers import check_is_source_target_graph, get_embedding_faces
-
 from ..canonical.canonical_order import (
     initialize_canonical_order,
     iterate_canonical_order,
 )
 from ..constants import BASE_PATH
+from ..dcel.external import fully_embed_graph
+from ..dual.create_domains import merge_domains
+from ..dual.create_rectangle import create_dual_and_calculate_domains
+from ..dual.helpers import check_is_source_target_graph, get_embedding_faces
+from ..fourtp.draw_four_complete import draw_four_complete_graph
+from ..fourtp.faces import get_embedding_of_four_complete_G, get_external_face
+from ..fourtp.four_complete import (
+    four_complete,
+    place_cardinal,
+)
 from ..rel.rel2 import (
     create_rel,
     extract_graphs,
     initialize_rel_graph,
     plot_rel_base_graph,
 )
-from .draw_four_complete import draw_four_complete_graph
 from .examples import kk85, kk85_outer_face
-from .faces import get_embedding_of_four_complete_G, get_external_face
-from .four_complete import (
-    four_complete,
-    place_cardinal,
-)
 
 
 def test_four_complete():
@@ -53,10 +53,9 @@ def test_co():
     return G_c, co
 
 
-def pickle_co():
+def write_co():
     G_c, co = test_co()
-    with open(BASE_PATH / "pickles/co.pickle", "wb") as handle:
-        pickle.dump([G_c, co], handle, protocol=pickle.HIGHEST_PROTOCOL)
+    write_canonical_outputs(G_c, co)
 
 
 def show_co():
@@ -66,22 +65,14 @@ def show_co():
     co: CanonicalOrder = r2
     G_c.G.remove_edge(u="v_n", v="v_s")
     G_c.draw_co(co)
-    # plot_canonical_order(G_c.G, G_c.full_pos, co)
 
 
 def setup_rel():
     G_c, co_vertices, pos = read_canonical_outputs()
-
-    # Ginit = initialize_rel_graph(G_c.G, co)
     return G_c, co_vertices, pos
 
 
 def test_init_rel():
-    # G_c, co = test_co()
-    # with open(BASE_PATH / "pickles/co.pickle", "rb") as handle:
-    #     r1, r2 = pickle.load(handle)
-    # G_c: G_canonical = r1
-    # co: CanonicalOrder = r2
     G_c, co_vertices, pos = setup_rel()
 
     Ginit = initialize_rel_graph(G_c, co_vertices)

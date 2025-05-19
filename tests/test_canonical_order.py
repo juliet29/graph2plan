@@ -4,9 +4,9 @@ from graph2plan.canonical.canonical_order import (
     initialize_canonical_order,
     iterate_canonical_order,
 )
-from graph2plan.fourtp.examples import kk85_outer_face
+from graph2plan.main.examples import kk85_outer_face
 from graph2plan.fourtp.four_complete import four_complete, place_cardinal
-from graph2plan.fourtp.tests import kk85
+from graph2plan.main.tests import kk85
 
 
 @pytest.fixture()

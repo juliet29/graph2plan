@@ -5,7 +5,7 @@ from graph2plan.dual.create_domains import merge_domains
 from graph2plan.dual.create_rectangle import create_dual_and_calculate_domains
 from graph2plan.fourtp.faces import get_embedding_of_four_complete_G
 from graph2plan.rel.rel2 import create_rel, extract_graphs
-from graph2plan.fourtp.tests import check_is_source_target_graph
+from graph2plan.main.tests import check_is_source_target_graph
 
 
 @pytest.fixture()
