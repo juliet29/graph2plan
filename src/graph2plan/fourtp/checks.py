@@ -40,9 +40,9 @@ def check_is_k_connected(G, k):
     for deg in degrees:
         if deg[1] < k:
             if k == 4:
-                raise Improper4TPGraphError(f"Node has less than 4 neighbors: {deg}")
+                raise Improper4TPGraphError(f"There exists a node with less than 4 neighbors: {deg}")
             elif k == 3:
-                raise Improper3TPGraphError(f"Node has less than 3 neighbors: {deg}")
+                raise Improper3TPGraphError(f"There exists a node with less than 3 neighbors: {deg}")
 
 
 

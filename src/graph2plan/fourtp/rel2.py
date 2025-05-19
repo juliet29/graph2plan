@@ -166,7 +166,7 @@ def extract_graphs(Ginit: nx.DiGraph):
     T1 = nx.DiGraph()
     T2 = nx.DiGraph()
     # exterior_names = get_exterior_names()
-    default_graph = T2
+    default_graph = T1
 
     for node, data in Ginit.nodes(data=True):
         res: RELVertexData = data["data"]
