@@ -1,6 +1,7 @@
 from graph2plan.helpers.geometry_interfaces import Coordinate, VertexPositions
 from .geometry_interfaces import T
 from copy import deepcopy
+import networkx as nx
 
 
 def assign_cardinal_pos(
@@ -38,5 +39,11 @@ def assign_pos(arrs: list[list[T]],  shift_value=1, ASSIGN_CARDINAL=False) -> Ve
             pos[vertex] = Coordinate(x, y)
 
     return VertexPositions({k: v.pair for k, v in pos.items()})
+
+def create_G_and_pos(G, draw=True):
+    pos = {i: i for i in G.nodes}
+    if draw:
+        nx.draw_networkx(G, pos)
+    return G, pos
 
 

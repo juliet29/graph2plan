@@ -6,13 +6,15 @@ from enum import Enum
 from copy import deepcopy
 import shapely as shp
 
+from graph2plan.dcel.original import create_embedding
 from graph2plan.fourtp.checks import Improper4TPGraphError, check_is_k_connected
 from graph2plan.fourtp.draw_four_complete import draw_four_complete_graph
+from graph2plan.fourtp.faces import get_external_face
 from graph2plan.helpers.utils import get_unique_items_in_list_keep_order
 from ..helpers.graph_interfaces import CardinalDirectionEnum as CDE
 from ..helpers.graph_interfaces import cardinal_directions, get_vertex_name
 from ..helpers.geometry_interfaces import T, VertexPositions
-from ..helpers.utils import chain_flatten
+from ..helpers.utils import chain_flatten, NotImplementedError
 from pprint import pprint
 
 
@@ -132,7 +134,7 @@ def find_paths(G_cycle: nx.DiGraph, pos: VertexPositions, alpha_node_mapping: di
     return path_pairs
 
 
-def four_complete(_G: nx.Graph, pos:VertexPositions,  outer_face):
+def four_complete(_G: nx.Graph, pos:VertexPositions,  outer_face:list[str]):
     alpha_node_mapping = choose_alphas(outer_face)
     # print({k.name: v for k, v in alpha_node_mapping.items()})
 
@@ -153,7 +155,7 @@ def four_complete(_G: nx.Graph, pos:VertexPositions,  outer_face):
             )
 
     # TODO at this point, distinguish between interior and exterior edges.. with an attribute.. 
-    # should just have these edges as a list saved somewhere.. 
+    # TODO should just have these edges as a list saved somewhere.. see where else this is used.. 
     G.add_edge(get_vertex_name(CDE.SOUTH), get_vertex_name(CDE.EAST))
     G.add_edge(get_vertex_name(CDE.SOUTH), get_vertex_name(CDE.WEST))
     G.add_edge(get_vertex_name(CDE.WEST), get_vertex_name(CDE.NORTH))
@@ -170,5 +172,58 @@ def four_complete(_G: nx.Graph, pos:VertexPositions,  outer_face):
         draw_four_complete_graph(G, pos, full_pos)
 
     return G, path_pairs
+
+
+def check_for_shortcuts(G: nx.Graph, outer_face:list[str]):
+    shortcuts = []
+    G_outer = nx.cycle_graph(outer_face, nx.Graph)
+    for u, v in G.edges:
+        if u in outer_face and v in outer_face:
+            if (u,v) not in G_outer.edges:
+                shortcuts.append((u,v))
+    
+    if len(shortcuts) >= 4:
+        raise NotImplementedError(f"Possibility of having more than 4 corner implying paths, but haven't implemented check for this: {shortcuts}. n_shortcuts={len(shortcuts)}")
+    
+    return shortcuts
+
+def add_points_on_shortcuts(_G: nx.Graph, _pos:VertexPositions, shortcuts: list[tuple[str]]):
+    def get_coord_of_new_point(shortcut:tuple[str]):
+        path_points = [pos[i] for i in shortcut]
+        print(path_points)
+        middle_point = shp.LineString(path_points).interpolate(0.5, normalized=True).coords[0]
+        print(middle_point)
+        assert len(middle_point) == 2
+        return middle_point
+
+    def add_new_point(shortcut:tuple[str]):
+        new_node = G.order() + 1
+        G.add_edges_from([(i, new_node) for i in shortcut])
+        pos[new_node] = get_coord_of_new_point(shortcut)
+
+    G = deepcopy(_G)
+    pos = deepcopy(_pos)
+    for sc in shortcuts:
+        add_new_point(sc)
+
+    nx.draw_networkx(G, pos)
+
+    return G, pos
+
+
+
+
+
+
+
+
+def graph_to_four_complete(G: nx.Graph, pos:VertexPositions ):
+    PE = create_embedding(G, pos)
+    outer_face = get_external_face(PE, pos)
+    shortcuts = check_for_shortcuts(G, outer_face)
+    print(shortcuts)
+    add_points_on_shortcuts(G, pos, shortcuts)
+    # check for short cuts.. 
+    # four_complete(G, pos, outer_face)
 
 

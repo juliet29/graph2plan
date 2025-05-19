@@ -2,6 +2,9 @@ from itertools import chain, tee
 from typing import Iterable
 import networkx as nx
 
+class NotImplementedError(Exception):
+    pass
+
 
 def set_difference(a: Iterable, b: Iterable):
     return list(set(a).difference(set(b)))
