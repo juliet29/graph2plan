@@ -1,19 +1,30 @@
 ## TODO not really 4TP, more so prep for dual..
 
 
+import json
 from copy import deepcopy
 from dataclasses import dataclass
 from pprint import pprint
 
+import matplotlib.pyplot as plt
+import networkx as nx
+
 from graph2plan.dual.helpers import get_embedding_faces
-from graph2plan.fourtp.draw_four_complete import compute_and_draw_edges, draw_four_complete_graph
+from graph2plan.fourtp.draw_four_complete import (
+    compute_and_draw_edges,
+    draw_four_complete_graph,
+)
 from graph2plan.fourtp.faces import get_embedding_of_four_complete_G, get_external_face
 from graph2plan.helpers.geometry_interfaces import VertexPositions
 from graph2plan.helpers.utils import set_difference
-import matplotlib.pyplot as plt
 
-import networkx as nx
+from ..constants import BASE_PATH
 
+
+class CanonicalOrderingFailure(Exception):
+    pass
+
+CanonicalVertices = dict[str, int]
 
 @dataclass
 class VertexData:
@@ -34,6 +45,7 @@ class VertexData:
         return False
 
 
+
 @dataclass
 class CanonicalOrder:
     vertices: dict[str, VertexData]
@@ -44,12 +56,14 @@ class CanonicalOrder:
     k: int = 3
 
     def __hash__(self) -> int:
-        return hash(frozenset((i.name, i.ordered_number) for i in self.vertices.values()))
+        return hash(
+            frozenset((i.name, i.ordered_number) for i in self.vertices.values())
+        )
 
     @property
     def unmarked(self):
         return [i.name for i in self.vertices.values() if not i.is_marked]
-    
+
     @property
     def unordered(self):
         return [i.name for i in self.vertices.values() if i.ordered_number < 0]
@@ -143,21 +157,54 @@ class G_canonical:
     def draw_co(self, co: CanonicalOrder):
         fig, ax = plt.subplots(1, 1)
         compute_and_draw_edges(self.G, self.pos, self.full_pos, ax)
-        nx.draw_networkx_nodes(self.G, self.full_pos, ax=ax, node_size=400, node_shape="s")
-        nx.draw_networkx_labels(self.G, self.full_pos, ax=ax, labels={n:f"{co.vertices[n].ordered_number}\n({n})" for n in self.G.nodes}, font_size=8)
+        nx.draw_networkx_nodes(
+            self.G, self.full_pos, ax=ax, node_size=400, node_shape="s"
+        )
+        nx.draw_networkx_labels(
+            self.G,
+            self.full_pos,
+            ax=ax,
+            labels={n: f"{co.vertices[n].ordered_number}\n({n})" for n in self.G.nodes},
+            font_size=8,
+        )
         # nx.draw_networkx_edges(self.G, self.full_pos, ax=ax)
         plt.show()
 
 
-        
+def write_canonical_outputs(G_c: G_canonical, co: CanonicalOrder):
+    path = BASE_PATH / "canonical_outputs"
+    # TODO add intermediate folder -> kk85..
+    G_json = nx.node_link_data(G_c.G, edges="edges")
+    with open(path / "graph.json", "w+") as file:
+        json.dump(G_json, default=str, fp=file)
+
+    # TODO add to class
+    co_vertices = {k: v.ordered_number for k, v in co.vertices.items()}
+    with open(path / "co_vertices.json", "w+") as file:
+        json.dump(co_vertices, default=str, fp=file)
+
+    # vertex positions..
+    with open(path / "pos.json", "w+") as file:
+        json.dump(G_c.full_pos, default=str, fp=file)
 
 
-class NotImplementedError(Exception):
-    pass
+def read_canonical_outputs():
+    path = BASE_PATH / "canonical_outputs"
+    with open(path / "graph.json", "r") as file:
+        d = json.load(file)
+    G: nx.Graph = nx.node_link_graph(d, edges="edges")
+
+    with open(path / "co_vertices.json", "r") as file:
+        co_vertices: CanonicalVertices = json.load(file)
+
+    with open(path / "pos.json", "r") as file:
+        p = json.load(file)
+
+    pos: VertexPositions = {k: tuple(v) for k,v in p.items()}
 
 
-class CanonicalOrderingFailure(Exception):
-    pass
+    return G, co_vertices, pos
 
-class EmbeddingFailure(Exception):
-    pass
+
+
+

@@ -4,7 +4,7 @@ from copy import deepcopy
 from graph2plan.dual.create_domains import merge_domains
 from graph2plan.dual.create_rectangle import create_dual_and_calculate_domains
 from graph2plan.dual.helpers import check_is_source_target_graph, get_embedding_faces
-from graph2plan.fourtp.canonical_interfaces import G_canonical, CanonicalOrder
+from graph2plan.fourtp.canonical_interfaces import G_canonical, CanonicalOrder, read_canonical_outputs
 
 from .canonical_order import (
     initialize_canonical_order,
@@ -12,7 +12,7 @@ from .canonical_order import (
 )
 from .draw_four_complete import draw_four_complete_graph
 from .examples import kk85, kk85_outer_face
-from .faces import get_external_face
+from .faces import get_embedding_of_four_complete_G, get_external_face
 from .four_complete import (
     four_complete,
     place_cardinal,
@@ -69,35 +69,35 @@ def show_co():
 
 
 def setup_rel():
-    with open(BASE_PATH / "pickles/co.pickle", "rb") as handle:
-        r1, r2 = pickle.load(handle)
-    G_c: G_canonical = r1
-    co: CanonicalOrder = r2
+    G_c, co_vertices, pos = read_canonical_outputs()
 
     # Ginit = initialize_rel_graph(G_c.G, co)
-    return G_c, co
+    return G_c, co_vertices, pos
 
 
 def test_init_rel():
     # G_c, co = test_co()
-    with open(BASE_PATH / "pickles/co.pickle", "rb") as handle:
-        r1, r2 = pickle.load(handle)
-    G_c: G_canonical = r1
-    co: CanonicalOrder = r2
+    # with open(BASE_PATH / "pickles/co.pickle", "rb") as handle:
+    #     r1, r2 = pickle.load(handle)
+    # G_c: G_canonical = r1
+    # co: CanonicalOrder = r2
+    G_c, co_vertices, pos = setup_rel()
 
-    Ginit = initialize_rel_graph(G_c.G, co)
-    plot_rel_base_graph(Ginit, G_c.full_pos, co)
+
+    Ginit = initialize_rel_graph(G_c, co_vertices)
+    plot_rel_base_graph(Ginit, pos, co_vertices)
     return Ginit
 
 
 def test_assign_rel():
-    G_c, co = setup_rel()
-    Grel = create_rel(G_c.G, co, G_c.embedding)
+    G_c,  co_vertices, pos = setup_rel()
+    embedding = get_embedding_of_four_complete_G(G_c, pos)
+    Grel = create_rel(G_c, co_vertices, embedding)
     T1, T2 = extract_graphs(Grel)
-    plot_rel_base_graph(Grel, G_c.full_pos, co, (T1, T2))
+    plot_rel_base_graph(Grel, pos, co_vertices, (T1, T2))
     check_is_source_target_graph(T1)
     check_is_source_target_graph(T2)
-    return Grel, T1, T2, G_c.full_pos
+    return Grel, T1, T2, pos
     # assign_rel_values_for_node(Ginit, G_c.embedding, co, "v3")
 
 def test_dual_creation():

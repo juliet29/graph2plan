@@ -25,9 +25,9 @@ def test_canonical_order_kk85(canonical_ordering_kk85):
     assert co
 
 def test_canonical_order_kk85_is_ordered(saved_co_kk85):
-    _, co = saved_co_kk85
-    for i in co.vertices.values():
-        assert i.ordered_number > 0
+    _, co_vertices, _ = saved_co_kk85
+    for i in co_vertices.values():
+        assert i > 0
 
 
 

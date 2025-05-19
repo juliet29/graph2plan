@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 from matplotlib.lines import Line2D
 
 from graph2plan.dual.helpers import check_is_source_target_graph
-from graph2plan.fourtp.canonical_interfaces import CanonicalOrder
+from graph2plan.fourtp.canonical_interfaces import CanonicalOrder, CanonicalVertices
 from graph2plan.helpers.geometry_interfaces import VertexPositions
 
 from matplotlib.axes import Axes
@@ -26,20 +26,20 @@ class RELVertexData:
     right_point: str = ""
     # TODO can decide to have more complex data structure.. but cant be tuple because will be updating..
 
-    def show_co(self, co: CanonicalOrder, node: str):
-        curr = co.vertices[node].ordered_number
-        le = co.vertices[self.left_edge].ordered_number
-        re = co.vertices[self.right_edge].ordered_number
-        b = co.vertices[self.basis_edge].ordered_number
-        lp = co.vertices[self.left_point].ordered_number
-        rp = co.vertices[self.right_point].ordered_number
+    def show_co(self, co_vertices: CanonicalVertices, node: str):
+        curr = co_vertices[node]
+        le = co_vertices[self.left_edge]
+        re = co_vertices[self.right_edge]
+        b = co_vertices[self.basis_edge]
+        lp = co_vertices[self.left_point]
+        rp = co_vertices[self.right_point]
         # r = f"curr: {curr}. basis: {b} \nedges: ({le}, {re}). points: ({lp, rp}). "
         r2 = f"node: {curr} | rp, re: {rp}->{re} | le, lp: {le}->{lp}"
         # print(r)
         print(r2)
 
 
-def initialize_rel_graph(_G: nx.Graph, co: CanonicalOrder):
+def initialize_rel_graph(_G: nx.Graph, co_vertices: CanonicalVertices):
     G = nx.DiGraph()
 
     for u, v in _G.edges:
@@ -47,8 +47,8 @@ def initialize_rel_graph(_G: nx.Graph, co: CanonicalOrder):
             continue
         elif v == "v_n" and u == "v_s":
             continue
-        order_u = co.vertices[u].ordered_number
-        order_v = co.vertices[v].ordered_number
+        order_u = co_vertices[u]
+        order_v = co_vertices[v]
         if order_u < order_v:
             G.add_edge(u, v)
         elif order_u > order_v:
@@ -68,7 +68,7 @@ def initialize_rel_graph(_G: nx.Graph, co: CanonicalOrder):
 # but dont have to recompute each time..
 # can also asign the basis edge at this point.. -> just find incoming edge that is the least..
 def assign_rel_values_for_node(
-    G: nx.DiGraph, embedding: nx.PlanarEmbedding, co: CanonicalOrder, node: str
+    G: nx.DiGraph, embedding: nx.PlanarEmbedding, co_vertices: CanonicalVertices, node: str
 ):
     cw_nbs = list(embedding.neighbors_cw_order(node))[::-1]
     count = 0
@@ -79,7 +79,7 @@ def assign_rel_values_for_node(
     data: RELVertexData = G.nodes[node]["data"]
 
     data.basis_edge = sorted(
-        set_intersection(cw_nbs, incoming), key=lambda x: co.vertices[x].ordered_number
+        set_intersection(cw_nbs, incoming), key=lambda x: co_vertices[x]
     )[0]
 
     right, left = False, False
@@ -89,17 +89,17 @@ def assign_rel_values_for_node(
         if a in incoming and b in outgoing:
             data.right_point = a
             data.right_edge = b
-            # print(f"in, out: {co.vertices[a].ordered_number,co.vertices[b].ordered_number}")
+            # print(f"in, out: {co_vertices[a],co_vertices[b]}")
 
             right = True
         if a in outgoing and b in incoming:
             data.left_edge = a
             data.left_point = b
             left = True
-            # print(f"out, in: {co.vertices[a].ordered_number,co.vertices[b].ordered_number}")
+            # print(f"out, in: {co_vertices[a],co_vertices[b]}")
 
         if right and left:
-            data.show_co(co, node)
+            data.show_co(co_vertices, node)
             break
 
         if count > len(cw_nbs) * 2:
@@ -111,30 +111,33 @@ def assign_rel_values_for_node(
     return G
 
 
-def create_rel(_G: nx.Graph, co: CanonicalOrder, embedding: nx.PlanarEmbedding):
-    Ginit = initialize_rel_graph(_G, co)
+def create_rel(_G: nx.Graph, co_vertices: CanonicalVertices, embedding: nx.PlanarEmbedding):
+    Ginit = initialize_rel_graph(_G, co_vertices)
     for node in Ginit.nodes:
         if node in ["v_n", "v_s", "v_w", "v_e"]:  # TODO better way for this..
             continue
-        Ginit = assign_rel_values_for_node(Ginit, embedding, co, node)
+        Ginit = assign_rel_values_for_node(Ginit, embedding, co_vertices, node)
 
     return Ginit
 
-def assign_missing_edges(_G:nx.DiGraph, T1: nx.DiGraph, T2: nx.DiGraph):
+
+def assign_missing_edges(_G: nx.DiGraph, T1: nx.DiGraph, T2: nx.DiGraph):
     G = deepcopy(_G)
     G.remove_edge(u="v_s", v="v_e")
     G.remove_edge(u="v_s", v="v_w")
     G.remove_edge(u="v_e", v="v_n")
     G.remove_edge(u="v_w", v="v_n")
-    # TODO this assumes that the REL only applies to interior nodes, but further testing will determine if this is wrong.. 
+    # TODO this assumes that the REL only applies to interior nodes, but further testing will determine if this is wrong..
     # find nodes not in T1 or in T2
     Gdiff = nx.difference(G, nx.compose(T1, T2))
     if not Gdiff.edges:
         print("No missing edges")
         return T1, T2
-    
-    for u,v in Gdiff.edges:
-        assert u in ["v_s", "v_w"] or v in ["v_n", "v_e"], f"Invalid missing edges! {Gdiff.edges}"
+
+    for u, v in Gdiff.edges:
+        assert u in ["v_s", "v_w"] or v in ["v_n", "v_e"], (
+            f"Invalid missing edges! {Gdiff.edges}"
+        )
         match u:
             case "v_s":
                 T1.add_edge(u, v)
@@ -154,12 +157,10 @@ def assign_missing_edges(_G:nx.DiGraph, T1: nx.DiGraph, T2: nx.DiGraph):
                 continue
             case _:
                 pass
-        
+
     return T1, T2
 
     # for outer_node in ["v_s", "v_w","v_n", "v_e"]
-
-
 
 
 def extract_graphs(Ginit: nx.DiGraph):
@@ -188,15 +189,13 @@ def extract_graphs(Ginit: nx.DiGraph):
     return T1, T2
 
 
-
-
-def plot_ordered_nodes(G: nx.Graph, pos: VertexPositions, co: CanonicalOrder, ax: Axes):
+def plot_ordered_nodes(G: nx.Graph, pos: VertexPositions, co_vertices: CanonicalVertices, ax: Axes):
     nx.draw_networkx_nodes(G, pos, ax=ax, node_size=400, node_shape="s")
     nx.draw_networkx_labels(
         G,
         pos,
         ax=ax,
-        labels={n: f"{co.vertices[n].ordered_number}\n({n})" for n in G.nodes},
+        labels={n: f"{co_vertices[n]}\n({n})" for n in G.nodes},
         font_size=8,
     )
     return ax
@@ -230,9 +229,11 @@ def plot_rel_edges(T1: nx.DiGraph, T2: nx.DiGraph, pos: VertexPositions, ax: Axe
     plt.legend(handles=legend_elements, title="Edge Types")
 
 
-def plot_rel_base_graph(G: nx.DiGraph, pos: VertexPositions, co: CanonicalOrder, st_graphs=None):
+def plot_rel_base_graph(
+    G: nx.DiGraph, pos: VertexPositions, co_vertices: CanonicalVertices, st_graphs=None
+):
     fig, ax = plt.subplots()
-    plot_ordered_nodes(G, pos, co, ax)
+    plot_ordered_nodes(G, pos, co_vertices, ax)
     if st_graphs:
         T1, T2 = st_graphs
         plot_rel_edges(T1, T2, pos, ax)
