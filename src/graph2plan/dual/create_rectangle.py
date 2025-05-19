@@ -1,8 +1,8 @@
 from ..dcel.interfaces import EmbedResult
 from ..helpers.graph_interfaces import Axis
-from .helpers import check_correct_n_faces_in_edge_face_dict
 from .create_domains import calculate_domains
 from .create_dual import create_dual, draw_dual, prep_dual
+from .helpers import check_correct_n_faces_in_edge_face_dict
 
 
 def create_dual_and_calculate_domains(

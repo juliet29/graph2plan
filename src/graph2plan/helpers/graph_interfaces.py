@@ -1,19 +1,18 @@
 from collections import namedtuple
 from dataclasses import dataclass
-from typing import Generic, Literal, NamedTuple
 from enum import Enum
+from typing import Generic, Literal, NamedTuple
 
-from shapely import MultiPoint, centroid, Polygon
+import networkx as nx
+from numpy import sign
+from shapely import MultiPoint, Polygon, centroid
 from shewchuk import orientation
+from sympy import Point, Triangle
 
+from graph2plan.dcel.interfaces import Edge
 from graph2plan.dcel.original import create_line
 
 from .geometry_interfaces import T, VertexPositions
-
-from sympy import Triangle, Point
-from graph2plan.dcel.interfaces import Edge
-import networkx as nx
-from numpy import sign
 
 
 @dataclass
@@ -31,7 +30,9 @@ class Face(Generic[T]):
         return x[0], y[0]
 
     def get_signed_area(self, pos: VertexPositions):
-        assert len(self.vertices) == 3, f"Face  {self.vertices} ! have 3 vertices. Not appropriate to calculate signed area with this method."
+        assert len(self.vertices) == 3, (
+            f"Face  {self.vertices} ! have 3 vertices. Not appropriate to calculate signed area with this method."
+        )
         Gcycle = nx.cycle_graph(self.vertices, nx.DiGraph)
         edges = [Edge(*e) for e in Gcycle.edges]
         # print([(e.u, e.v) for e in edges])
@@ -151,6 +152,7 @@ cardinal_directions: dict[CardinalDirectionEnum, CardinalDirectionData] = {
 
 def get_vertex_name(drn: CardinalDirectionEnum):
     return cardinal_directions[drn].vertex_name
+
 
 def get_exterior_names():
     return [cardinal_directions[drn].vertex_name for drn in CardinalDirectionEnum]

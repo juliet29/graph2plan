@@ -1,6 +1,6 @@
 import pytest
 
-from graph2plan.fourtp.canonical_order import (
+from graph2plan.canonical.canonical_order import (
     initialize_canonical_order,
     iterate_canonical_order,
 )

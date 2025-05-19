@@ -1,14 +1,27 @@
+# from .rel import CanonicalOrder, extract_graphs, create_rel
+import pickle
 from copy import deepcopy
 
-
+from graph2plan.canonical.canonical_interfaces import (
+    CanonicalOrder,
+    G_canonical,
+    read_canonical_outputs,
+)
+from graph2plan.dcel.external import fully_embed_graph
 from graph2plan.dual.create_domains import merge_domains
 from graph2plan.dual.create_rectangle import create_dual_and_calculate_domains
 from graph2plan.dual.helpers import check_is_source_target_graph, get_embedding_faces
-from graph2plan.fourtp.canonical_interfaces import G_canonical, CanonicalOrder, read_canonical_outputs
 
-from .canonical_order import (
+from ..canonical.canonical_order import (
     initialize_canonical_order,
     iterate_canonical_order,
+)
+from ..constants import BASE_PATH
+from ..rel.rel2 import (
+    create_rel,
+    extract_graphs,
+    initialize_rel_graph,
+    plot_rel_base_graph,
 )
 from .draw_four_complete import draw_four_complete_graph
 from .examples import kk85, kk85_outer_face
@@ -17,18 +30,6 @@ from .four_complete import (
     four_complete,
     place_cardinal,
 )
-from graph2plan.dcel.external import fully_embed_graph
-
-# from .rel import CanonicalOrder, extract_graphs, create_rel
-import pickle
-from ..constants import BASE_PATH
-from .rel2 import (
-    initialize_rel_graph,
-    plot_rel_base_graph,
-    create_rel,
-    extract_graphs
-)
-
 
 
 def test_four_complete():
@@ -83,14 +84,13 @@ def test_init_rel():
     # co: CanonicalOrder = r2
     G_c, co_vertices, pos = setup_rel()
 
-
     Ginit = initialize_rel_graph(G_c, co_vertices)
     plot_rel_base_graph(Ginit, pos, co_vertices)
     return Ginit
 
 
 def test_assign_rel():
-    G_c,  co_vertices, pos = setup_rel()
+    G_c, co_vertices, pos = setup_rel()
     embedding = get_embedding_of_four_complete_G(G_c, pos)
     Grel = create_rel(G_c, co_vertices, embedding)
     T1, T2 = extract_graphs(Grel)
@@ -100,18 +100,18 @@ def test_assign_rel():
     return Grel, T1, T2, pos
     # assign_rel_values_for_node(Ginit, G_c.embedding, co, "v3")
 
+
 def test_dual_creation():
     Grel, T1, T2, pos = test_assign_rel()
     res1 = fully_embed_graph(T1, pos, "y")
     res2 = fully_embed_graph(T2, pos, "x")
     x_domains = create_dual_and_calculate_domains(res1, "y", True)
     y_domains = create_dual_and_calculate_domains(res2, "x", True)
-    # TODO may have errors because of orientation.. 
+    # TODO may have errors because of orientation..
     merged_doms = merge_domains(x_domains, y_domains)
     merged_doms.draw()
     #
     return merged_doms
-
 
 
 def test_external_face():

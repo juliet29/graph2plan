@@ -1,24 +1,22 @@
-from copy import deepcopy
 import functools
+from copy import deepcopy
 
-from matplotlib import pyplot as plt
 import networkx as nx
+from matplotlib import pyplot as plt
 
-from graph2plan.dcel.interfaces import CanonicalOrderingFailure
-from graph2plan.fourtp.canonical_helpers import (
+from .canonical_helpers import (
     check_and_update_chords,
     update_neighbors_visited,
 )
-from graph2plan.fourtp.canonical_interfaces import (
+from .canonical_interfaces import (
     CanonicalOrder,
     G_canonical,
     VertexData,
 )
+from graph2plan.dcel.interfaces import CanonicalOrderingFailure
 from graph2plan.helpers.geometry_interfaces import VertexPositions
 
 from .check_canonical import vk_permits_valid_order
-
-
 
 
 def initialize_canonical_order(_G: nx.Graph, pos, full_pos):
@@ -40,7 +38,6 @@ def initialize_canonical_order(_G: nx.Graph, pos, full_pos):
     assert len(co.potential_vertices()) == 1
 
     return G_c, co
-
 
 
 @functools.lru_cache

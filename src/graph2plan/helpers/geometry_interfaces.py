@@ -48,7 +48,7 @@ class ShapelyBounds:
 
     @property
     def mid_values(self):
-        # TODO use the centroid.. or create another that uses the centroid.. 
+        # TODO use the centroid.. or create another that uses the centroid..
         x = (self.max_x - self.min_x) / 2 + self.min_x
         y = (self.max_y - self.min_y) / 2 + self.min_y
         return Mids(x, y)
@@ -102,21 +102,19 @@ class CoordinateList:
         xs = [i.x for i in self.coordinates]
         ys = [i.y for i in self.coordinates]
         return ShapelyBounds(min(xs), min(ys), max(xs), max(ys))
-    
+
     def extreme_coord(self):
         min_x = min([i.x for i in self.coordinates])
         potential_points = [i for i in self.coordinates if i.x == min_x]
         return sorted(potential_points, key=lambda i: i.y)[0]
 
-
     @classmethod
     def to_coordinate_list(cls, pos: VertexPositions):
         return cls([Coordinate(*i) for i in pos.values()])
-    
+
     @classmethod
     def name_extreme_coord(cls, pos: VertexPositions):
         c = cls.to_coordinate_list(pos)
-        extrema = [k for k,v in pos.items() if v == c.extreme_coord().pair]
+        extrema = [k for k, v in pos.items() if v == c.extreme_coord().pair]
         assert len(extrema) == 1
         return extrema[0]
-

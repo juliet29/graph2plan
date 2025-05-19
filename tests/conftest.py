@@ -1,7 +1,7 @@
 import pytest
 
 from graph2plan.constants import BASE_PATH
-from graph2plan.fourtp.canonical_interfaces import G_canonical, CanonicalOrder, read_canonical_outputs
+from graph2plan.canonical.canonical_interfaces import G_canonical, CanonicalOrder, read_canonical_outputs
 import pickle
 
 @pytest.fixture()

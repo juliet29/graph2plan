@@ -3,7 +3,7 @@ import networkx as nx
 import pytest
 
 from graph2plan.dcel.original import create_embedding
-from graph2plan.fourtp.checks import (
+from graph2plan.helpers.graph_checks import (
     check_interior_faces_are_triangles,
     check_is_4_connected,
     check_is_triangulated_chordal,

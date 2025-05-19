@@ -1,9 +1,11 @@
-from graph2plan.fourtp.canonical_interfaces import CanonicalOrderingFailure
-from .canonical_interfaces import CanonicalOrder, G_canonical
-from ..helpers.utils import set_intersection
 from itertools import permutations
 
 import networkx as nx
+
+from .canonical_interfaces import CanonicalOrderingFailure
+
+from ..helpers.utils import set_intersection
+from .canonical_interfaces import CanonicalOrder, G_canonical
 
 
 def is_Gk_minus_1_biconnected(G: nx.Graph, co: CanonicalOrder):
@@ -18,6 +20,7 @@ def is_Gk_minus_1_biconnected(G: nx.Graph, co: CanonicalOrder):
         return
 
     # print(">>Biconnection check: passed")
+
 
 # TODO clean up logic
 def are_u_v_in_Ck(G_c: G_canonical, co: CanonicalOrder):
@@ -49,26 +52,30 @@ def do_vk_nbs_form_2v_subinterval_in_Ck_minus_1(
     outer_face = G_c.outer_face_at_k_minus_1(co)
     nbs_in_outer_face = set_intersection(nbs, outer_face)
     if not len(nbs_in_outer_face) >= 2:
-            raise CanonicalOrderingFailure(f"`{node}` does not have >2 nbs in Ck-1({nbs_in_outer_face})")
-    
+        raise CanonicalOrderingFailure(
+            f"`{node}` does not have >2 nbs in Ck-1({nbs_in_outer_face})"
+        )
+
     Gcycle = nx.cycle_graph(outer_face, nx.Graph)
     for p in permutations(nbs_in_outer_face):
         if nx.is_simple_path(Gcycle, p):
             # print(">>vk nbs form 2v subinterval in Ck-1 check: passed")
-            return 
-        
+            return
+
     raise CanonicalOrderingFailure(
-            f"Nbs of `{node}` ({nbs_in_outer_face}) do not form path in Ck-1: {outer_face}"
-        )
+        f"Nbs of `{node}` ({nbs_in_outer_face}) do not form path in Ck-1: {outer_face}"
+    )
 
 
 def does_vk_have_2plus_nbs_in_G_diff_Gk_minus_1(
     G_c: G_canonical, co: CanonicalOrder, node: str
 ):
     if co.k > co.n - 2:
-        print(f">>vk has 2+ nbs in G-(Gk-1) check:  Skipping since  k ({co.k}) > n-2 ({co.n - 2})...")
+        print(
+            f">>vk has 2+ nbs in G-(Gk-1) check:  Skipping since  k ({co.k}) > n-2 ({co.n - 2})..."
+        )
         return
-    
+
     # TODO repeated in previous check, can pull out..
     nbs = list(G_c.G.neighbors(node))
     if not len(nbs) >= 2:
@@ -88,4 +95,3 @@ def vk_permits_valid_order(G_c: G_canonical, co: CanonicalOrder, node: str):
     is_vk_in_Ck(G_c, co, node)
     do_vk_nbs_form_2v_subinterval_in_Ck_minus_1(G_c, co, node)
     does_vk_have_2plus_nbs_in_G_diff_Gk_minus_1(G_c, co, node)
-

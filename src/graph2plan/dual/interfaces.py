@@ -7,8 +7,6 @@ import shapely
 from ..helpers.geometry_interfaces import ShapelyBounds, T
 from ..helpers.graph_interfaces import Face
 
-
-
 MarkedNb = NamedTuple("MarkedNb", [("name", str), ("mark", Literal["IN", "OUT"])])
 
 
@@ -70,4 +68,3 @@ class Domains:
         shapes = [i.bounds.to_shapely_rectangle() for i in self.domains]
         union = shapely.unary_union(shapes)
         return union
-

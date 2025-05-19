@@ -20,7 +20,7 @@ def create_bounding_ellipse(_G: nx.Graph, _pos: VertexPositions):
     pos = deepcopy(_pos)
     G = deepcopy(_G)
     points = MultiPoint([p for p in pos.values()])
-    bounds = ShapelyBounds(*points.envelope.bounds) # TODO this is repeated elsewhere.. 
+    bounds = ShapelyBounds(*points.envelope.bounds)  # TODO this is repeated elsewhere..
     new_pos = bounds.circular_cardinal_values()._asdict()
     pos_extension = dict(set(new_pos.items()) - set(pos.items()))
     G.add_nodes_from(pos_extension.keys())
@@ -92,7 +92,7 @@ def embed_target_source_edge(_PG: nx.PlanarEmbedding, axis: Axis = "y"):
     return PG, directed_edges
 
 
-# TODO this is in a very specific instance.. where have source target graphs.. 
+# TODO this is in a very specific instance.. where have source target graphs..
 def fully_embed_graph(G: nx.Graph, pos: VertexPositions, axis: Axis):
     directed_edges = list(G.edges)
     PG = create_embedding(G, pos)

@@ -1,16 +1,20 @@
 from ast import excepthandler
+
 import networkx as nx
-import matplotlib.pyplot as plt
 
 from graph2plan.dcel.original import create_embedding
+
 from ..dual.helpers import get_embedding_faces
 
 
 # TODO have different classes - based on first level, triangulation, four-connection..
 class ImproperGraphError(Exception):
     pass
+
+
 class Improper3TPGraphError(Exception):
     pass
+
 
 class Improper4TPGraphError(Exception):
     pass
@@ -31,7 +35,7 @@ def check_is_biconnected(G):
         raise ImproperGraphError(
             f"not biconnected - articulation points =  {artic_points} "
         )
-    # TODO think about if need expelicit 2-connected check.. 
+    # TODO think about if need expelicit 2-connected check..
 
 
 def check_is_k_connected(G, k):
@@ -40,10 +44,13 @@ def check_is_k_connected(G, k):
     for deg in degrees:
         if deg[1] < k:
             if k == 4:
-                raise Improper4TPGraphError(f"There exists a node with less than 4 neighbors: {deg}")
+                raise Improper4TPGraphError(
+                    f"There exists a node with less than 4 neighbors: {deg}"
+                )
             elif k == 3:
-                raise Improper3TPGraphError(f"There exists a node with less than 3 neighbors: {deg}")
-
+                raise Improper3TPGraphError(
+                    f"There exists a node with less than 3 neighbors: {deg}"
+                )
 
 
 # def check_is_3_connected(G):
@@ -106,8 +113,3 @@ def check_is_valid_4_connected(G, pos):
 
 
 # ---
-def draw_node_positioned_graph(G):
-    pos = {i: i for i in G.nodes}
-    plt.figure()
-    nx.draw_networkx(G, pos)
-    return G, pos

@@ -1,20 +1,16 @@
 from copy import deepcopy
 from dataclasses import dataclass
-
-from matplotlib import pyplot as plt
-from matplotlib.lines import Line2D
-
-from graph2plan.dual.helpers import check_is_source_target_graph
-from graph2plan.fourtp.canonical_interfaces import CanonicalOrder, CanonicalVertices
-from graph2plan.helpers.geometry_interfaces import VertexPositions
-
-from matplotlib.axes import Axes
-
-from graph2plan.helpers.utils import pairwise, set_intersection
-from .canonical_interfaces import CanonicalOrder, G_canonical
+from itertools import cycle
 
 import networkx as nx
-from itertools import cycle
+from matplotlib import pyplot as plt
+from matplotlib.axes import Axes
+from matplotlib.lines import Line2D
+
+from graph2plan.canonical.canonical_interfaces import CanonicalVertices
+from graph2plan.helpers.geometry_interfaces import VertexPositions
+from graph2plan.helpers.utils import pairwise, set_intersection
+
 
 
 @dataclass
@@ -68,7 +64,10 @@ def initialize_rel_graph(_G: nx.Graph, co_vertices: CanonicalVertices):
 # but dont have to recompute each time..
 # can also asign the basis edge at this point.. -> just find incoming edge that is the least..
 def assign_rel_values_for_node(
-    G: nx.DiGraph, embedding: nx.PlanarEmbedding, co_vertices: CanonicalVertices, node: str
+    G: nx.DiGraph,
+    embedding: nx.PlanarEmbedding,
+    co_vertices: CanonicalVertices,
+    node: str,
 ):
     cw_nbs = list(embedding.neighbors_cw_order(node))[::-1]
     count = 0
@@ -111,7 +110,9 @@ def assign_rel_values_for_node(
     return G
 
 
-def create_rel(_G: nx.Graph, co_vertices: CanonicalVertices, embedding: nx.PlanarEmbedding):
+def create_rel(
+    _G: nx.Graph, co_vertices: CanonicalVertices, embedding: nx.PlanarEmbedding
+):
     Ginit = initialize_rel_graph(_G, co_vertices)
     for node in Ginit.nodes:
         if node in ["v_n", "v_s", "v_w", "v_e"]:  # TODO better way for this..
@@ -189,7 +190,9 @@ def extract_graphs(Ginit: nx.DiGraph):
     return T1, T2
 
 
-def plot_ordered_nodes(G: nx.Graph, pos: VertexPositions, co_vertices: CanonicalVertices, ax: Axes):
+def plot_ordered_nodes(
+    G: nx.Graph, pos: VertexPositions, co_vertices: CanonicalVertices, ax: Axes
+):
     nx.draw_networkx_nodes(G, pos, ax=ax, node_size=400, node_shape="s")
     nx.draw_networkx_labels(
         G,

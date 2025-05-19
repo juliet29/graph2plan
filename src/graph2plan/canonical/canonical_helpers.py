@@ -1,13 +1,11 @@
-from graph2plan.dcel.interfaces import EdgeList
-from graph2plan.fourtp.canonical_interfaces import (
+import networkx as nx
+
+from .canonical_interfaces import (
     CanonicalOrder,
     G_canonical,
     set_difference,
 )
-
-
-import networkx as nx
-
+from graph2plan.dcel.interfaces import EdgeList
 from graph2plan.helpers.utils import neighborhood
 
 

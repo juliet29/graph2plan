@@ -24,7 +24,9 @@ from ..constants import BASE_PATH
 class CanonicalOrderingFailure(Exception):
     pass
 
+
 CanonicalVertices = dict[str, int]
+
 
 @dataclass
 class VertexData:
@@ -43,7 +45,6 @@ class VertexData:
             # print(f"{self.name} is potential next")
             return True
         return False
-
 
 
 @dataclass
@@ -200,11 +201,6 @@ def read_canonical_outputs():
     with open(path / "pos.json", "r") as file:
         p = json.load(file)
 
-    pos: VertexPositions = {k: tuple(v) for k,v in p.items()}
-
+    pos: VertexPositions = {k: tuple(v) for k, v in p.items()}
 
     return G, co_vertices, pos
-
-
-
-

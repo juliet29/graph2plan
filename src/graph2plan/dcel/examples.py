@@ -1,7 +1,9 @@
 import networkx as nx
+
 from ..helpers.graph_interfaces import VertexPositions
 
 """ example from DeBerg s2.2 on doubly connected edge list (dcel) """
+
 
 def draw_deberg(G: nx.Graph, plot=False):
     pos = VertexPositions({1: (0, 4), 2: (2, 4), 3: (2, 2), 4: (1, 1)})

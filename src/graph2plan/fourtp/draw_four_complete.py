@@ -1,10 +1,11 @@
 import matplotlib.pyplot as plt
-from graph2plan.dual.helpers import split_cardinal_and_interior_edges
-from graph2plan.helpers.geometry_interfaces import ShapelyBounds
 import networkx as nx
 import shapely as shp
 from matplotlib.patches import FancyArrowPatch
 from matplotlib.transforms import Bbox
+
+from graph2plan.dual.helpers import split_cardinal_and_interior_edges
+from graph2plan.helpers.geometry_interfaces import ShapelyBounds
 
 
 def compute_and_draw_edges(G, pos, full_pos, ax):

@@ -3,7 +3,7 @@ from graph2plan.dcel.original import create_embedding
 from graph2plan.fourtp.examples import kk85, kk85_outer_face
 from graph2plan.fourtp.faces import get_external_face
 from graph2plan.fourtp.four_complete import Alphas, four_complete, check_for_shortcuts
-from graph2plan.fourtp.checks import Improper4TPGraphError, check_is_k_connected
+from graph2plan.helpers.graph_checks import Improper4TPGraphError, check_is_k_connected
 import pytest
 from graph2plan.helpers.auto_pos import create_G_and_pos
 

@@ -1,12 +1,14 @@
-from graph2plan.helpers.geometry_interfaces import Coordinate, VertexPositions
-from .geometry_interfaces import T
 from copy import deepcopy
+
+import matplotlib.pyplot as plt
 import networkx as nx
 
+from graph2plan.helpers.geometry_interfaces import Coordinate, VertexPositions
 
-def assign_cardinal_pos(
-    arrs: list[list[T]], _pos: dict, delta_x: int, delta_y:int
-):
+from .geometry_interfaces import T
+
+
+def assign_cardinal_pos(arrs: list[list[T]], _pos: dict, delta_x: int, delta_y: int):
     max_len = max([len(i) for i in arrs])
     n_arrs = len(arrs)
 
@@ -23,8 +25,9 @@ def assign_cardinal_pos(
     return pos
 
 
-def assign_pos(arrs: list[list[T]],  shift_value=1, ASSIGN_CARDINAL=False) -> VertexPositions:
-
+def assign_pos(
+    arrs: list[list[T]], shift_value=1, ASSIGN_CARDINAL=False
+) -> VertexPositions:
     pos = {}
     delta_x = delta_y = 1
 
@@ -40,6 +43,7 @@ def assign_pos(arrs: list[list[T]],  shift_value=1, ASSIGN_CARDINAL=False) -> Ve
 
     return VertexPositions({k: v.pair for k, v in pos.items()})
 
+
 def create_G_and_pos(G, draw=True):
     pos = {i: i for i in G.nodes}
     if draw:
@@ -47,3 +51,8 @@ def create_G_and_pos(G, draw=True):
     return G, pos
 
 
+def draw_node_positioned_graph(G):
+    pos = {i: i for i in G.nodes}
+    plt.figure()
+    nx.draw_networkx(G, pos)
+    return G, pos
