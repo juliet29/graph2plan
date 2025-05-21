@@ -56,3 +56,11 @@ def draw_node_positioned_graph(G):
     plt.figure()
     nx.draw_networkx(G, pos)
     return G, pos
+
+
+def create_integer_G_and_pos(_G, draw=True):
+    G = nx.convert_node_labels_to_integers(_G)
+    pos = {name: curr_pos for name, curr_pos in zip(G.nodes, _G.nodes)}
+    if draw:
+        nx.draw_networkx(G, pos)
+    return G, pos

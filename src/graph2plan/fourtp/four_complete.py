@@ -9,7 +9,10 @@ import networkx as nx
 import shapely as shp
 
 from graph2plan.dcel.original import create_embedding
-from graph2plan.fourtp.draw_four_complete import draw_four_complete_graph
+from graph2plan.fourtp.draw_four_complete import (
+    draw_four_complete_graph,
+    place_cardinal,
+)
 from graph2plan.fourtp.faces import get_external_face
 from graph2plan.helpers.graph_checks import Improper4TPGraphError, check_is_k_connected
 from graph2plan.helpers.utils import get_unique_items_in_list_keep_order
@@ -44,34 +47,6 @@ class CardinalPath(NamedTuple):
 
     def __repr__(self) -> str:
         return f"{(self.drn.name, self.path)}"
-
-
-def place_cardinal(_pos: VertexPositions, path_pairs: list[CardinalPath]):
-    def get_location(path):
-        path_points = [pos[i] for i in path]
-
-        path_centroid = shp.MultiPoint(path_points).centroid
-
-        line = shp.shortest_line(path_centroid, boundary)
-        drn_location = [i for i in line.coords][1]
-        assert len(drn_location) == 2
-        return drn_location
-        # pos[get_vertex_name(drn)] = drn_location
-        # return p
-
-    pos = deepcopy(_pos)
-    graph_points = list(pos.values())
-    # TODO compute distance based on VertexPositions, 1 may be too far or not far enough..
-    boundary = (
-        shp.MultiPoint(graph_points)
-        .convex_hull.buffer(distance=1, quad_segs=1)
-        .exterior
-    )
-    for pair in path_pairs:
-        drn, path = pair
-        pos[get_vertex_name(drn)] = get_location(path)
-
-    return pos
 
 
 def choose_alphas(outer_face: list[T]):
@@ -163,14 +138,15 @@ def four_complete(_G: nx.Graph, pos: VertexPositions, outer_face: list[str]):
     # apparently adding an edge between non-adjacent nodes is enough to four-complete (from kant + he)
     G.add_edge(get_vertex_name(CDE.SOUTH), get_vertex_name(CDE.NORTH))
 
+    full_pos = place_cardinal(pos, path_pairs)
+    draw_four_complete_graph(G, pos, full_pos)
     try:
         check_is_k_connected(G, 3)
         check_is_k_connected(G, 4)
     except Improper4TPGraphError:
-        full_pos = place_cardinal(pos, path_pairs)
-        draw_four_complete_graph(G, pos, full_pos)
+        print("Graph is NOT 4-connected!!")
 
-    return G, path_pairs
+    return G, full_pos
 
 
 def check_for_shortcuts(G: nx.Graph, outer_face: list[str]):
@@ -189,10 +165,14 @@ def check_for_shortcuts(G: nx.Graph, outer_face: list[str]):
     return shortcuts
 
 
+# TODO tuple[str, str] -> edge
+Edge = tuple[str, str]
+
+
 def add_points_on_shortcuts(
-    _G: nx.Graph, _pos: VertexPositions, shortcuts: list[tuple[str]]
+    _G: nx.Graph, _pos: VertexPositions, shortcuts: list[Edge], outer_face: list[str]
 ):
-    def get_coord_of_new_point(shortcut: tuple[str]):
+    def get_coord_of_new_point(shortcut: Edge):
         path_points = [pos[i] for i in shortcut]
         print(path_points)
         middle_point = (
@@ -202,13 +182,23 @@ def add_points_on_shortcuts(
         assert len(middle_point) == 2
         return middle_point
 
-    def add_new_point(shortcut: tuple[str]):
+    def add_new_point(shortcut: Edge):
         new_node = G.order() + 1
         G.add_edges_from([(i, new_node) for i in shortcut])
+        # node not on ends of the shortcut
+        path = nx.shortest_path(G_outer, *shortcut)
+        if len(path) != 3:
+            raise NotImplementedError(
+                f"Havent handled shortcuts that are longer than len 3, curr len {len(path)}"
+            )
+        G.add_edge(new_node, path[1])
         pos[new_node] = get_coord_of_new_point(shortcut)
+
+        G.remove_edge(*shortcut)
 
     G = deepcopy(_G)
     pos = deepcopy(_pos)
+    G_outer = nx.cycle_graph(outer_face, nx.Graph)
     for sc in shortcuts:
         add_new_point(sc)
 
@@ -221,7 +211,11 @@ def graph_to_four_complete(G: nx.Graph, pos: VertexPositions):
     PE = create_embedding(G, pos)
     outer_face = get_external_face(PE, pos)
     shortcuts = check_for_shortcuts(G, outer_face)
-    print(shortcuts)
-    add_points_on_shortcuts(G, pos, shortcuts)
-    # check for short cuts..
-    # four_complete(G, pos, outer_face)
+    print(f"==>> shortcuts: {shortcuts}")
+    G2, pos2 = add_points_on_shortcuts(G, pos, shortcuts, outer_face)
+    shortcuts2 = check_for_shortcuts(G2, outer_face)
+    assert len(shortcuts2) == 0, (
+        f"There should be no shortcuts, but now we have: {shortcuts2}"
+    )
+
+    return four_complete(G2, pos2, outer_face)

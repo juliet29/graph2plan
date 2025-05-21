@@ -2,11 +2,13 @@
 import pickle
 from copy import deepcopy
 
+from graph2plan.helpers.auto_pos import create_integer_G_and_pos
+
 from ..canonical.canonical_interfaces import (
     CanonicalOrder,
     G_canonical,
     read_canonical_outputs,
-    write_canonical_outputs
+    write_canonical_outputs,
 )
 from ..canonical.canonical_order import (
     initialize_canonical_order,
@@ -17,11 +19,11 @@ from ..dcel.external import fully_embed_graph
 from ..dual.create_domains import merge_domains
 from ..dual.create_rectangle import create_dual_and_calculate_domains
 from ..dual.helpers import check_is_source_target_graph, get_embedding_faces
-from ..fourtp.draw_four_complete import draw_four_complete_graph
+from ..fourtp.draw_four_complete import draw_four_complete_graph, place_cardinal
 from ..fourtp.faces import get_embedding_of_four_complete_G, get_external_face
 from ..fourtp.four_complete import (
     four_complete,
-    place_cardinal,
+    graph_to_four_complete,
 )
 from ..rel.rel2 import (
     create_rel,
@@ -103,6 +105,11 @@ def test_dual_creation():
     merged_doms.draw()
     #
     return merged_doms
+
+
+def triangular_graph_to_dual(G):
+    Ginteger, pos = create_integer_G_and_pos(G)
+    G_four_complete, path_pairs = graph_to_four_complete(Ginteger, pos)
 
 
 def test_external_face():
