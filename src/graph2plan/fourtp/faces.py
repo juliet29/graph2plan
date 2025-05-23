@@ -11,6 +11,7 @@ from graph2plan.dual.helpers import (
 )
 from graph2plan.helpers.geometry_interfaces import CoordinateList, VertexPositions
 
+import matplotlib.pyplot as plt
 # TODO this all goes elsewhere.. =>combine with dcel when simplify that..
 
 
@@ -33,6 +34,16 @@ def add_cw_pair(PE: nx.PlanarEmbedding, node, cw_nb):
 
     PE.add_half_edge_cw(cw_nb, node, reference_neighbor=get_last_cw_nb(PE, cw_nb))
     assert get_last_cw_nb(PE, cw_nb) == node
+
+    try:
+        PE.check_structure()
+    except NetworkXException:
+        fig, ax = plt.subplots(nrows=1, ncols=1)
+        nx.draw_networkx(PE, ax=ax)
+        print(f"==>> PE.edges: {PE.edges}")
+        ax.set_title(f"Itermed Planar Embedding -> Adding Edge {node}, {cw_nb}  failed")
+        raise NetworkXException
+
     return PE
 
 
@@ -40,19 +51,42 @@ def add_cw_pair(PE: nx.PlanarEmbedding, node, cw_nb):
 def add_exterior_embed(_PE: nx.PlanarEmbedding):
     PE = deepcopy(_PE)
     PE = add_cw_pair(PE, "v_n", "v_e")
+
     PE = add_cw_pair(PE, "v_e", "v_s")
     PE = add_cw_pair(PE, "v_s", "v_w")
     PE = add_cw_pair(PE, "v_w", "v_n")
     PE = add_cw_pair(PE, "v_s", "v_n")  # think about this a bit...
-    PE.check_structure()
 
-    return PE
+    try:
+        PE.check_structure()
+    except NetworkXException:
+        return PE, False
+
+
+
+    return PE, True
 
 
 def get_embedding_of_four_complete_G(G: nx.Graph, full_pos: VertexPositions):
     _, interior = split_cardinal_and_interior_edges(G)
     PE_interior = create_embedding(nx.edge_subgraph(G, interior), full_pos)
-    return add_exterior_embed(PE_interior)
+    PE, success = add_exterior_embed(PE_interior) 
+    if success:
+        return PE
+    else:
+        fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2)
+        nx.draw_networkx(G, full_pos, ax=ax1)
+        ax1.set_title("Initial Graph")
+        print(f"==>> G.edges: {G.edges}")
+
+        nx.draw_networkx(PE, full_pos, ax=ax2)
+        print(f"==>> PE.edges: {PE.edges}")
+        ax2.set_title("Planar Embedding")
+        raise Exception("Invalid Planar Embedding!")
+
+        
+
+    # adding exterior embedding should be dependent on wha
 
 
 def get_external_face(PE: nx.PlanarEmbedding, full_pos: VertexPositions):

@@ -10,7 +10,7 @@ def soft_check_structure(PG: nx.PlanarEmbedding):
     try:
         PG.check_structure()
     except NetworkXException:
-        print("Structure of this embedding is invalid!!!!")
+        raise Exception("Structure of this embedding is invalid!!!!")
 
 
 def create_line(edge: Edge, pos: VertexPositions):

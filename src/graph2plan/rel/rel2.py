@@ -3,14 +3,10 @@ from dataclasses import dataclass
 from itertools import cycle
 
 import networkx as nx
-from matplotlib import pyplot as plt
-from matplotlib.axes import Axes
-from matplotlib.lines import Line2D
 
 from graph2plan.canonical.canonical_interfaces import CanonicalVertices
-from graph2plan.helpers.geometry_interfaces import VertexPositions
+from graph2plan.dual.helpers import check_is_source_target_graph
 from graph2plan.helpers.utils import pairwise, set_intersection
-
 
 
 @dataclass
@@ -131,9 +127,11 @@ def assign_missing_edges(_G: nx.DiGraph, T1: nx.DiGraph, T2: nx.DiGraph):
     # TODO this assumes that the REL only applies to interior nodes, but further testing will determine if this is wrong..
     # find nodes not in T1 or in T2
     Gdiff = nx.difference(G, nx.compose(T1, T2))
+    print(f"edges potentially in rel {G.edges}")
     if not Gdiff.edges:
         print("No missing edges")
         return T1, T2
+    print(f"==>> Gdiff.edges: {Gdiff.edges}")
 
     for u, v in Gdiff.edges:
         assert u in ["v_s", "v_w"] or v in ["v_n", "v_e"], (
@@ -190,57 +188,11 @@ def extract_graphs(Ginit: nx.DiGraph):
     return T1, T2
 
 
-def plot_ordered_nodes(
-    G: nx.Graph, pos: VertexPositions, co_vertices: CanonicalVertices, ax: Axes
-):
-    nx.draw_networkx_nodes(G, pos, ax=ax, node_size=400, node_shape="s")
-    nx.draw_networkx_labels(
-        G,
-        pos,
-        ax=ax,
-        labels={n: f"{co_vertices[n]}\n({n})" for n in G.nodes},
-        font_size=8,
-    )
-    return ax
+def create_rel_and_extract_st_graphs(G: nx.Graph, co_vertices: CanonicalVertices, embedding: nx.PlanarEmbedding):
+    Grel = create_rel(G, co_vertices, embedding)
+    T1, T2 = extract_graphs(Grel)
+    check_is_source_target_graph(T1) # TODO checks like this should all come from the same place outside the main worker modules.. 
+    check_is_source_target_graph(T2)
 
+    return Grel, T1, T2
 
-def plot_rel_edges(T1: nx.DiGraph, T2: nx.DiGraph, pos: VertexPositions, ax: Axes):
-    nx.draw_networkx_edges(T1, pos, edge_color="blue", ax=ax, label="T1")
-    nx.draw_networkx_edges(T2, pos, edge_color="red", ax=ax, label="T2")
-    nx.draw_networkx_edge_labels(
-        T1,
-        pos,
-        edge_labels={
-            (u, v): data["basis"] for u, v, data in T1.edges(data=True) if data
-        },
-    )
-
-    nx.draw_networkx_edge_labels(
-        T2,
-        pos,
-        edge_labels={
-            (u, v): data["basis"] for u, v, data in T2.edges(data=True) if data
-        },
-    )
-
-    legend_elements = [
-        Line2D([0], [0], color="blue", lw=2, label="T1"),
-        Line2D([0], [0], color="red", lw=2, label="T2"),
-    ]
-
-    # Add the legend to the plot
-    plt.legend(handles=legend_elements, title="Edge Types")
-
-
-def plot_rel_base_graph(
-    G: nx.DiGraph, pos: VertexPositions, co_vertices: CanonicalVertices, st_graphs=None
-):
-    fig, ax = plt.subplots()
-    plot_ordered_nodes(G, pos, co_vertices, ax)
-    if st_graphs:
-        T1, T2 = st_graphs
-        plot_rel_edges(T1, T2, pos, ax)
-    else:
-        nx.draw_networkx_edges(G, pos)
-
-    plt.show()

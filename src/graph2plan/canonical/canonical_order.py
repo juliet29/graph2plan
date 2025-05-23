@@ -22,6 +22,7 @@ from .check_canonical import vk_permits_valid_order
 def initialize_canonical_order(_G: nx.Graph, pos, full_pos):
     # TODO -> test that graph is 4TP
     G = deepcopy(_G).to_undirected()
+    
     G_c = G_canonical(G, pos, full_pos)
     vertices = {i: VertexData(i) for i in G.nodes}
     co = CanonicalOrder(vertices, u="v_s", v="v_w", w="v_n", n=G.order())
@@ -82,3 +83,11 @@ def iterate_canonical_order(G_c: G_canonical, co: CanonicalOrder):
     co.vertices[vk].ordered_number = co.k
 
     return G_c, co
+
+def create_canonical_order(G, pos, full_pos):
+    G_c, co = initialize_canonical_order(G, pos, full_pos)
+    print("-----Initialization complete---")
+    G_c, co = iterate_canonical_order(G_c, co)
+    print("-----Canonical ordering complete---")
+    return G_c, co 
+

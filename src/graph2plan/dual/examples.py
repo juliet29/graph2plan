@@ -3,7 +3,7 @@ import networkx as nx
 from graph2plan.helpers.auto_pos import assign_pos
 
 from ..dcel.external import fully_embed_graph
-from .create_rectangle import create_dual_and_calculate_domains
+from .create_rectangular_floorplan import create_dual_and_calculate_domains
 
 """
     example from Kant+He'97

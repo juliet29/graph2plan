@@ -117,6 +117,10 @@ class CanonicalOrder:
         )
         pprint(s)
 
+    @property
+    def co_vertices(self) -> CanonicalVertices:
+        return {k: v.ordered_number for k, v in self.vertices.items()}
+
 
 @dataclass
 class G_canonical:

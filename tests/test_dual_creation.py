@@ -2,12 +2,13 @@ import math
 import networkx as nx
 import pytest
 
+from graph2plan.dual.create_rectangular_floorplan import merge_domains
 from graph2plan.dual.helpers import (
     check_correct_n_faces_in_edge_face_dict,
     check_is_source_target_graph,
 )
 from graph2plan.dual.create_dual import create_dual, prep_dual
-from graph2plan.dual.create_domains import calculate_domains, merge_domains
+from graph2plan.dual.calculate_domains import calculate_domains
 from graph2plan.dual.examples import (
     create_domains_for_kant,
     fully_embed_kant,

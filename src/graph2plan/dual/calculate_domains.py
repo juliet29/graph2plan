@@ -4,10 +4,7 @@ from itertools import cycle
 import networkx as nx
 
 from graph2plan.dual.create_dual import get_node_by_face
-from graph2plan.dual.interfaces import Domain, Domains, MarkedNb, VertexDomain
-from graph2plan.helpers.geometry_interfaces import (
-    ShapelyBounds,
-)
+from graph2plan.dual.interfaces import MarkedNb, VertexDomain
 from graph2plan.helpers.graph_interfaces import (
     Axis,
     Face,
@@ -17,7 +14,9 @@ from graph2plan.helpers.graph_interfaces import (
 from graph2plan.helpers.utils import pairwise
 
 
-def find_vertex_faces(PG: nx.PlanarEmbedding, directed_edges: list[tuple], node):
+def find_vertex_faces(
+    PG: nx.PlanarEmbedding, directed_edges: list[tuple], node
+):  # TODO should this be somewhere else?
     dpg = PG.to_directed().edge_subgraph(directed_edges)
     cw_neighbors = list(PG.neighbors_cw_order(node))
     incoming = list(dpg.predecessors(node))  # type: ignore
@@ -120,24 +119,3 @@ def calculate_domains(
             print(f"{key} has invalid distance: {a}")
 
     return vertex_distances
-
-
-def merge_domains(
-    x_domains: dict[str, VertexDomain], y_domains: dict[str, VertexDomain]
-):
-    domains = []
-    assert x_domains.keys() == y_domains.keys()
-    for key in x_domains.keys():
-        xdom = x_domains[key]
-        ydom = y_domains[key]
-        domains.append(
-            Domain(
-                name=key,
-                bounds=ShapelyBounds(
-                    min_x=xdom.min, min_y=ydom.min, max_x=xdom.max, max_y=ydom.max
-                ),
-            )
-        )
-
-    doms = Domains(domains)
-    return doms

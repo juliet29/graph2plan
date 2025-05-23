@@ -1,9 +1,9 @@
+from itertools import cycle
 import random
 from collections import deque
 from copy import deepcopy
-from enum import Enum
 from pprint import pprint
-from typing import Literal, NamedTuple
+from typing import Literal
 
 import networkx as nx
 import shapely as shp
@@ -14,6 +14,7 @@ from graph2plan.fourtp.draw_four_complete import (
     place_cardinal,
 )
 from graph2plan.fourtp.faces import get_external_face
+from graph2plan.fourtp.interfaces import Alphas, CardinalPath, alpha_mapping
 from graph2plan.helpers.graph_checks import Improper4TPGraphError, check_is_k_connected
 from graph2plan.helpers.utils import get_unique_items_in_list_keep_order
 
@@ -25,40 +26,32 @@ from ..helpers.utils import NotImplementedError, chain_flatten
 """Four-completion algorithm from Koz+Kim'85, to take a triangulated graph and make it four completed... Currently only works if exterior face has at least 4 nodes"""
 
 
-class Alphas(Enum):
-    NE = 0
-    SE = 1
-    SW = 2
-    NW = 3
-
-
-alpha_mapping: dict[CDE, tuple[Alphas, Alphas]] = {
-    # counter clockwise orientation here
-    CDE.NORTH: (Alphas.NW, Alphas.NE),
-    CDE.EAST: (Alphas.NE, Alphas.SE),
-    CDE.SOUTH: (Alphas.SE, Alphas.SW),
-    CDE.WEST: (Alphas.SW, Alphas.NW),
-}
-
-
-class CardinalPath(NamedTuple):
-    drn: CDE
-    path: list
-
-    def __repr__(self) -> str:
-        return f"{(self.drn.name, self.path)}"
-
-
-def choose_alphas(outer_face: list[T]):
+def choose_alphas(outer_face: list[T], SEED=3) -> dict[Alphas, T]:
     # outer face should be clockwise!
-    random.seed(3)
-    N_NODES = 4
-    assert (
-        len(outer_face) >= N_NODES
-    )  # TODO adress the case when there are three.. / deal with case of max assigning two alphas to a node on external boundary..
-    # also think  about the case for two and one..
-    selected_nodes = sorted(random.sample(outer_face, N_NODES), key=outer_face.index)
-    return {alpha: node for alpha, node in zip(Alphas, selected_nodes)}
+    random.seed(SEED)
+    N_NODES = len(outer_face)
+    if N_NODES >3:
+        selected_nodes = sorted(
+            random.sample(outer_face, N_NODES), key=outer_face.index
+        )
+        return {alpha: node for alpha, node in zip(Alphas, selected_nodes)}
+    else:
+        face = deque(outer_face)
+        print(f"==>> face: {face}")
+        
+        rotation_num = 0 # random.randint(0, 2)
+        face.rotate(rotation_num)
+        print(f"==>> face afyer rotate: {face}")
+        # face.reverse()
+        # print(f"==>> face afyer reverse: {face}")
+
+        if N_NODES == 3 or N_NODES == 1:
+            return {alpha: node for alpha, node in zip(Alphas, cycle(face))}
+        elif N_NODES == 2:
+            face_iter = list(face) + list(reversed(face))
+            return {alpha: node for alpha, node in zip(Alphas, face_iter)}
+        else:
+            raise Exception(f"Invalid outer face with len {N_NODES}")
 
 
 def check_paths_are_correct(G_cycle: nx.DiGraph, path_pairs: list[CardinalPath]):
@@ -89,7 +82,7 @@ def orient_paths(pos: VertexPositions, path_pairs: list[CardinalPath]):
 
 
 def find_paths(
-    G_cycle: nx.DiGraph, pos: VertexPositions, alpha_node_mapping: dict[Alphas, T]
+    G_cycle: nx.DiGraph, alpha_node_mapping: dict[Alphas, T], pos: VertexPositions 
 ):
     def find_card_drn_path(drn):
         alpha1, alpha2 = alpha_mapping[drn]
@@ -102,8 +95,7 @@ def find_paths(
 
     check_paths_are_correct(G_cycle, path_pairs)
 
-    path_pairs = orient_paths(pos, path_pairs)
-    # pprint(path_pairs)
+    # path_pairs = orient_paths(pos, path_pairs)
 
     return path_pairs
 
@@ -113,7 +105,7 @@ def four_complete(_G: nx.Graph, pos: VertexPositions, outer_face: list[str]):
     # print({k.name: v for k, v in alpha_node_mapping.items()})
 
     G_cycle = nx.cycle_graph(outer_face, nx.DiGraph)
-    path_pairs = find_paths(G_cycle, pos, alpha_node_mapping)
+    path_pairs = find_paths(G_cycle, alpha_node_mapping, pos)
     # can find the path that is most south, and assign that to be south, then move other along ..
 
     G = deepcopy(_G)
@@ -169,53 +161,21 @@ def check_for_shortcuts(G: nx.Graph, outer_face: list[str]):
 Edge = tuple[str, str]
 
 
-def add_points_on_shortcuts(
-    _G: nx.Graph, _pos: VertexPositions, shortcuts: list[Edge], outer_face: list[str]
-):
-    def get_coord_of_new_point(shortcut: Edge):
-        path_points = [pos[i] for i in shortcut]
-        print(path_points)
-        middle_point = (
-            shp.LineString(path_points).interpolate(0.5, normalized=True).coords[0]
-        )
-        print(middle_point)
-        assert len(middle_point) == 2
-        return middle_point
-
-    def add_new_point(shortcut: Edge):
-        new_node = G.order() + 1
-        G.add_edges_from([(i, new_node) for i in shortcut])
-        # node not on ends of the shortcut
-        path = nx.shortest_path(G_outer, *shortcut)
-        if len(path) != 3:
-            raise NotImplementedError(
-                f"Havent handled shortcuts that are longer than len 3, curr len {len(path)}"
-            )
-        G.add_edge(new_node, path[1])
-        pos[new_node] = get_coord_of_new_point(shortcut)
-
-        G.remove_edge(*shortcut)
-
-    G = deepcopy(_G)
-    pos = deepcopy(_pos)
-    G_outer = nx.cycle_graph(outer_face, nx.Graph)
-    for sc in shortcuts:
-        add_new_point(sc)
-
-    nx.draw_networkx(G, pos)
-
-    return G, pos
-
-
 def graph_to_four_complete(G: nx.Graph, pos: VertexPositions):
     PE = create_embedding(G, pos)
-    outer_face = get_external_face(PE, pos)
-    shortcuts = check_for_shortcuts(G, outer_face)
-    print(f"==>> shortcuts: {shortcuts}")
-    G2, pos2 = add_points_on_shortcuts(G, pos, shortcuts, outer_face)
-    shortcuts2 = check_for_shortcuts(G2, outer_face)
-    assert len(shortcuts2) == 0, (
-        f"There should be no shortcuts, but now we have: {shortcuts2}"
-    )
+    if G.order() <= 2:
+        outer_face = list(G.nodes) # need to organize them clockwise.. 
+    else:
+        outer_face = get_external_face(PE, pos)
 
-    return four_complete(G2, pos2, outer_face)
+    shortcuts = check_for_shortcuts(G, outer_face)
+    # print(f"==>> shortcuts: {shortcuts}")
+    if shortcuts and len(outer_face) >= 4:
+        raise NotImplementedError("Haven't appropiately handled short cuts!")
+    # G2, pos2 = add_points_on_shortcuts(G, pos, shortcuts, outer_face)
+    # shortcuts2 = check_for_shortcuts(G2, outer_face)
+    # assert len(shortcuts2) == 0, (
+    #     f"There should be no shortcuts, but now we have: {shortcuts2}"
+    # )
+
+    return four_complete(G, pos, outer_face)

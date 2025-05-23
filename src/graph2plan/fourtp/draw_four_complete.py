@@ -6,7 +6,7 @@ from matplotlib.patches import FancyArrowPatch
 from matplotlib.transforms import Bbox
 
 from graph2plan.dual.helpers import split_cardinal_and_interior_edges
-from graph2plan.fourtp.four_complete import CardinalPath
+from graph2plan.fourtp.interfaces import CardinalPath
 from graph2plan.helpers.geometry_interfaces import ShapelyBounds
 from graph2plan.helpers.graph_interfaces import get_vertex_name, VertexPositions
 

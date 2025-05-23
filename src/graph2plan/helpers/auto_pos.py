@@ -58,9 +58,13 @@ def draw_node_positioned_graph(G):
     return G, pos
 
 
-def create_integer_G_and_pos(_G, draw=True):
+def create_integer_G_and_pos(_G, draw=True, ADD_V=False) -> tuple[nx.Graph, VertexPositions]:
     G = nx.convert_node_labels_to_integers(_G)
-    pos = {name: curr_pos for name, curr_pos in zip(G.nodes, _G.nodes)}
+    if ADD_V:
+        pos = {name: curr_pos for name, curr_pos in zip(G.nodes, _G.nodes)}
+    else:
+        pos = {name: curr_pos for name, curr_pos in zip(G.nodes, _G.nodes)}
+    print(pos)
     if draw:
         nx.draw_networkx(G, pos)
-    return G, pos
+    return G, VertexPositions(pos)
