@@ -71,18 +71,7 @@ def test_save_plan():
     merged_doms = test_create_dual()
     merged_doms.write_floorplan()
 
-# def test_co_three_graph():
-#     G, pos = create_integer_G_and_pos(nx.triangular_lattice_graph(1, 1))
-#     Gfc, full_pos = graph_to_four_complete(G, pos)
-#     print(Gfc.nodes)
-#     G_c, co = initialize_canonical_order(Gfc, pos, full_pos)
-#     G_c, co = iterate_canonical_order(G_c, co)
-#     return G_c, co
 
-
-# def triangular_graph_to_dual(G):
-#     Ginteger, pos = create_integer_G_and_pos(G)
-#     G_four_complete, path_pairs = graph_to_four_complete(Ginteger, pos)
 
 if __name__ == "__main__":
     print("Running main test")

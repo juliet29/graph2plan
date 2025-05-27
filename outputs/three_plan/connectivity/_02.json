@@ -1,0 +1,10 @@
+{
+  "directed": false,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [{ "id": "v_w" }, { "id": "c" }, { "id": "v_e" }],
+  "edges": [
+    { "source": "v_w", "target": "c" },
+    { "source": "c", "target": "v_e" }
+  ]
+}

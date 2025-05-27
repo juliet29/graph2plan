@@ -5,8 +5,26 @@ from itertools import cycle
 import networkx as nx
 
 from graph2plan.canonical.canonical_interfaces import CanonicalVertices
+from graph2plan.constants import OUTPUTS_PATH
 from graph2plan.dual.helpers import check_is_source_target_graph
-from graph2plan.helpers.utils import pairwise, set_intersection
+from graph2plan.helpers.utils import pairwise, set_intersection, write_graph, read_graph
+from typing import NamedTuple
+import json
+
+
+class STGraphs(NamedTuple):
+    T1: nx.DiGraph
+    T2: nx.DiGraph
+
+    def save_rel_graphs(self, output_path=OUTPUTS_PATH):
+        write_graph(self.T1, "T1", output_path)
+        write_graph(self.T2, "T2", output_path)
+
+        print(f"Saved graphs to {output_path.parent / output_path.name}")
+
+    @classmethod
+    def read_rel_graphs(cls, output_path=OUTPUTS_PATH):
+        return cls(read_graph("T1", output_path), read_graph("T2", output_path))
 
 
 @dataclass
@@ -188,11 +206,14 @@ def extract_graphs(Ginit: nx.DiGraph):
     return T1, T2
 
 
-def create_rel_and_extract_st_graphs(G: nx.Graph, co_vertices: CanonicalVertices, embedding: nx.PlanarEmbedding):
+def create_rel_and_extract_st_graphs(
+    G: nx.Graph, co_vertices: CanonicalVertices, embedding: nx.PlanarEmbedding
+):
     Grel = create_rel(G, co_vertices, embedding)
     T1, T2 = extract_graphs(Grel)
-    check_is_source_target_graph(T1) # TODO checks like this should all come from the same place outside the main worker modules.. 
+    check_is_source_target_graph(
+        T1
+    )  # TODO checks like this should all come from the same place outside the main worker modules..
     check_is_source_target_graph(T2)
 
     return Grel, T1, T2
-

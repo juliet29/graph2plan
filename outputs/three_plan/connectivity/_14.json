@@ -1,0 +1,18 @@
+{
+  "directed": false,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [{ "id": "v_s" }, { "id": "a" }, { "id": "c" }, { "id": "v_n" }, { "id": "b" }, { "id": "v_w" }, { "id": "v_e" }],
+  "edges": [
+    { "source": "v_s", "target": "a" },
+    { "source": "v_s", "target": "b" },
+    { "source": "a", "target": "c" },
+    { "source": "a", "target": "b" },
+    { "source": "a", "target": "v_e" },
+    { "source": "c", "target": "v_n" },
+    { "source": "c", "target": "b" },
+    { "source": "c", "target": "v_w" },
+    { "source": "c", "target": "v_e" },
+    { "source": "b", "target": "v_w" }
+  ]
+}
