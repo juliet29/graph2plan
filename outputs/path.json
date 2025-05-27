@@ -1,0 +1,14 @@
+[
+  { "label": "v0", "left": "1", "top": "4", "width": "1", "height": "3", "id": 0, "color": "" },
+  { "label": "v1", "left": "1", "top": "5", "width": "3", "height": "1", "id": 1, "color": "" },
+  { "label": "v5", "left": "2", "top": "2", "width": "3", "height": "1", "id": 2, "color": "" },
+  { "label": "v6", "left": "5", "top": "3", "width": "1", "height": "2", "id": 3, "color": "" },
+  { "label": "v2", "left": "2", "top": "4", "width": "1", "height": "2", "id": 4, "color": "" },
+  { "label": "v3", "left": "3", "top": "4", "width": "2", "height": "2", "id": 5, "color": "" },
+  { "label": "v7", "left": "4", "top": "5", "width": "2", "height": "1", "id": 6, "color": "" },
+  { "label": "v4", "left": "5", "top": "4", "width": "1", "height": "1", "id": 7, "color": "" },
+  { "label": "v_s", "left": "1", "top": "1", "width": "5", "height": "1", "id": 8, "color": "" },
+  { "label": "v_n", "left": "1", "top": "6", "width": "5", "height": "1", "id": 9, "color": "" },
+  { "label": "v_w", "left": "0", "top": "6", "width": "1", "height": "6", "id": 10, "color": "" },
+  { "label": "v_e", "left": "6", "top": "6", "width": "1", "height": "6", "id": 11, "color": "" }
+]

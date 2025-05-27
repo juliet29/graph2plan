@@ -57,9 +57,16 @@ class CanonicalOrder:
     k: int = 3
 
     def __hash__(self) -> int:
-        return hash(
-            frozenset((i.name, i.ordered_number) for i in self.vertices.values())
-        )
+        return hash(frozenset(self.co_vertices))
+        # return hash(
+        #     frozenset((i.name, i.ordered_number) for i in self.vertices.values())
+        # )
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, CanonicalOrder):
+            return self.co_vertices == other.co_vertices
+        raise NotImplementedError("Can't compare a non-canon order!")
+
 
     @property
     def unmarked(self):
@@ -129,7 +136,13 @@ class G_canonical:
     full_pos: VertexPositions
 
     def __hash__(self) -> int:
-        return hash(self.G)
+        return hash(nx.weisfeiler_lehman_graph_hash(self.G))
+    
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, G_canonical):
+            return nx.utils.graphs_equal(self.G, other.G)
+        raise NotImplementedError("Can't compare a non G_canonical!")
 
     @property
     def embedding(self):

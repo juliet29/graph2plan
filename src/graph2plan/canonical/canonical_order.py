@@ -84,6 +84,7 @@ def iterate_canonical_order(G_c: G_canonical, co: CanonicalOrder):
 
     return G_c, co
 
+
 def create_canonical_order(G, pos, full_pos):
     G_c, co = initialize_canonical_order(G, pos, full_pos)
     print("-----Initialization complete---")

@@ -35,14 +35,14 @@ def add_cw_pair(PE: nx.PlanarEmbedding, node, cw_nb):
     PE.add_half_edge_cw(cw_nb, node, reference_neighbor=get_last_cw_nb(PE, cw_nb))
     assert get_last_cw_nb(PE, cw_nb) == node
 
-    try:
-        PE.check_structure()
-    except NetworkXException:
-        fig, ax = plt.subplots(nrows=1, ncols=1)
-        nx.draw_networkx(PE, ax=ax)
-        print(f"==>> PE.edges: {PE.edges}")
-        ax.set_title(f"Itermed Planar Embedding -> Adding Edge {node}, {cw_nb}  failed")
-        raise NetworkXException
+    # try:
+    #     PE.check_structure()
+    # except NetworkXException:
+    #     fig, ax = plt.subplots(nrows=1, ncols=1)
+    #     nx.draw_networkx(PE, ax=ax)
+    #     print(f"==>> PE.edges: {PE.edges}")
+    #     ax.set_title(f"Itermed Planar Embedding -> Adding Edge {node}, {cw_nb}  failed")
+    #     raise NetworkXException
 
     return PE
 

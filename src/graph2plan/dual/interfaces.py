@@ -1,11 +1,16 @@
+from pathlib import Path
+import json
 from dataclasses import dataclass
 from typing import Generic, Literal, NamedTuple
 
 import matplotlib.pyplot as plt
 import shapely
 
+from graph2plan.constants import OUTPUTS_PATH
+
 from ..helpers.geometry_interfaces import ShapelyBounds, T
 from ..helpers.graph_interfaces import Face
+
 
 MarkedNb = NamedTuple("MarkedNb", [("name", str), ("mark", Literal["IN", "OUT"])])
 
@@ -68,3 +73,16 @@ class Domains:
         shapes = [i.bounds.to_shapely_rectangle() for i in self.domains]
         union = shapely.unary_union(shapes)
         return union
+    
+    def to_floorplan(self):
+        return [dom.bounds.to_room_type(ix, dom.name).to_json() for ix, dom in enumerate(self.domains)]
+    
+    def write_floorplan(self, output_path:Path=OUTPUTS_PATH, filename="path.json"):
+        with open(output_path / filename, "w+") as file:
+            json.dump(self.to_floorplan(), default=str, fp=file)
+            print(f"Saved floorplan to {output_path.parent / output_path.name}") # TODO potentially rich print?
+            
+
+
+    
+    # jsonify should exist here.. 

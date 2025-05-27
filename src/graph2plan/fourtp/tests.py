@@ -1,12 +1,11 @@
-from graph2plan.canonical.canonical_order import initialize_canonical_order
-from graph2plan.dual.helpers import check_is_source_target_graph
+from graph2plan.canonical.canonical_order import create_canonical_order
+from graph2plan.dual.create_rectangular_floorplan import create_floorplan_from_st_graphs
 from graph2plan.helpers.geometry_interfaces import VertexPositions
 import networkx as nx
 from graph2plan.dcel.original import create_embedding
 from graph2plan.fourtp.faces import get_external_face
-from graph2plan.main.tests import create_rel, iterate_canonical_order, create_dual
 from graph2plan.rel.draw_rel import plot_rel_base_graph
-from graph2plan.rel.rel2 import extract_graphs, initialize_rel_graph
+from graph2plan.rel.rel2 import create_rel_and_extract_st_graphs
 from .four_complete import (
     check_for_shortcuts,
     choose_alphas,
@@ -17,7 +16,6 @@ from .four_complete import (
 import random
 from itertools import cycle
 from collections import deque
-import networkx as nx
 from ..helpers.auto_pos import create_integer_G_and_pos
 
 
@@ -30,7 +28,7 @@ def get_shortcuts(G: nx.Graph, pos: VertexPositions):
 
 def test_alpha_selections(SEED=0):
     outer_face = deque("a b c".split())
-    G_cycle = nx.cycle_graph(outer_face, nx.DiGraph)
+    # G_cycle = nx.cycle_graph(outer_face, nx.DiGraph)
     # glue together backwards if len == 2, instead of cycling..
 
     random.seed(SEED)
@@ -46,7 +44,7 @@ def test_alpha_selections(SEED=0):
 
 
 def test_degen_cycle(SEED=0):
-    outer_face = "c a b".split()  # issue bc the embedding coming automatically, but have chance to explore cw vs not cw external face embedding..
+    outer_face:list[str] = list("c a b".split())  # issue bc the embedding not oming automatically, but have chance to explore cw vs not cw external face embedding..
     positions = [(0, 1), (1, 0), (0, 0)]
     pos = VertexPositions({k: v for k, v in zip(outer_face, positions)})
     # G_cycle = nx.cycle_graph(outer_face, nx.DiGraph)
@@ -61,20 +59,15 @@ def test_degen_cycle(SEED=0):
     print(f"==>> path_pairs: {path_pairs}")
 
     Gfc, full_pos = four_complete(G_cycle, pos, outer_face)
-    G_c, co = initialize_canonical_order(Gfc, pos, full_pos)
-    G_c, co = iterate_canonical_order(G_c, co)
+    G_c, co = create_canonical_order(Gfc, pos, full_pos)
     print(f"==>> after canon G_c.edges: {G_c.G.edges}")
 
-    Grel = create_rel(G_c.G, co.co_vertices, G_c.embedding)
-    print(f"==>> Grel edges: {Grel.edges}")
 
-    T1, T2 = extract_graphs(Grel)
+    Grel, T1, T2 = create_rel_and_extract_st_graphs(G_c.G, co.co_vertices, G_c.embedding)
     plot_rel_base_graph(Grel, full_pos, co.co_vertices, (T1, T2))
-    check_is_source_target_graph(T1)
-    check_is_source_target_graph(T2)
-    merged_doms = create_dual(Grel, T1, T2, full_pos)
+    merged_doms = create_floorplan_from_st_graphs(T1, T2, full_pos)
 
-    return G_c, co
+    return merged_doms, T1, T2
 
 
 def test_three_graph():

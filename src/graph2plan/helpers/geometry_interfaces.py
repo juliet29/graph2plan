@@ -1,6 +1,6 @@
 from collections import namedtuple
 from dataclasses import dataclass
-from typing import TypeVar
+from typing import TypeVar, TypedDict, Optional
 
 from matplotlib.patches import Rectangle
 from shapely import Polygon
@@ -27,6 +27,20 @@ class Coordinate:
 
 Mids = namedtuple("Mids", ["x", "y"])
 CardinalPos = namedtuple("CardinalPos", ["v_n", "v_e", "v_s", "v_w"])
+
+
+@dataclass
+class RoomType:
+    label: str
+    left: str
+    top: str
+    width: str
+    height: str
+    id: Optional[float]
+    color: Optional[str]
+
+    def to_json(self):
+        return self.__dict__
 
 
 @dataclass
@@ -91,6 +105,17 @@ class ShapelyBounds:
         coords = self.get_rectangular_coords()
         polygon = Polygon([i.pair for i in coords])
         return polygon
+
+    def to_room_type(self, ix: int, label: str):
+        return RoomType(
+            label,
+            str(self.min_x),
+            str(self.max_y),
+            str(self.width),
+            str(self.height),
+            id=ix,
+            color="",
+        )
 
 
 @dataclass
