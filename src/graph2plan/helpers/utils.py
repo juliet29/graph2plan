@@ -2,10 +2,11 @@ from itertools import chain, tee
 from typing import Iterable
 from pathlib import Path
 import json
+import pickle
 
 import networkx as nx
 
-from graph2plan.constants import OUTPUTS_PATH
+from graph2plan.constants import OUTPUTS_PATH, PICKLES_PATH
 
 
 class NotImplementedError(Exception):
@@ -66,3 +67,25 @@ def read_graph(name:str, output_path=OUTPUTS_PATH):
         d = json.load(file)
     G: nx.Graph = nx.node_link_graph(d, edges="edges")
     return G
+
+def write_pickle(item, file_name:str):
+    path = PICKLES_PATH / f'{file_name}.pickle'
+    if path.exists():
+        raise Exception(f"File already exists at {path} - try another name")
+    with open(path, 'wb') as handle:
+        pickle.dump(item, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    print(f"Wrote pickle to {path.parent} / {path.name}")
+
+
+def read_pickle(file_name:str):
+    with open(PICKLES_PATH / f'{file_name}.pickle', 'rb') as handle:
+        result = pickle.load(handle)
+
+    return result
+
+
+if __name__ == "__main__":
+    cat = [1,2,3,4]
+    write_pickle(cat, "my_cat")
+    res = read_pickle("my_cat")
+    print(res)

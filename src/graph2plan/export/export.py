@@ -1,5 +1,9 @@
+from copy import deepcopy
+
+from networkx import relabel_nodes
 from graph2plan.fourtp.tests import test_degen_cycle
-from graph2plan.helpers.utils import chain_flatten, get_folder_path
+from graph2plan.helpers.graph_interfaces import CardinalDirectionEnum, mapping_for_exterior_vertices
+from graph2plan.helpers.utils import chain_flatten, get_folder_path, read_pickle, write_pickle
 from graph2plan.dual.interfaces import Domains
 from graph2plan.constants import OUTPUTS_PATH
 import networkx as nx
@@ -33,14 +37,30 @@ from graph2plan.rel.rel2 import STGraphs, write_graph
 
 
 def generate_connectivities(st_graphs: STGraphs):
-    T1, T2 = st_graphs
-
     # TODO write test for three-cycle graphs => should have four..
     def get_paths(G: nx.DiGraph, source, target):
         return [i for i in nx.all_simple_edge_paths(G, source, target)]
+    
+    def create_graph_from_path_combo(path_combo:list[int]):
+        G = nx.Graph()
+        for key in path_combo:
+            path = all_paths[key]
+            G.add_edges_from(path)
 
-    T1_source_and_target = ("v_s", "v_n")  # TODO encode in graph /
-    T2_source_and_target = ("v_w", "v_e")
+        return G
+    
+
+    T1, T2 = deepcopy(st_graphs)
+    relabel_nodes(T1, mapping_for_exterior_vertices(), copy=False)
+    relabel_nodes(T2, mapping_for_exterior_vertices(), copy=False)
+    # replace name in graph...
+    print(T1.edges)
+    print(T2.edges)
+
+
+
+    T1_source_and_target = (CardinalDirectionEnum.NORTH.name, CardinalDirectionEnum.SOUTH.name)  # TODO encode in graph /
+    T2_source_and_target = (CardinalDirectionEnum.WEST.name, CardinalDirectionEnum.EAST.name)
 
     all_paths = chain_flatten(
         [
@@ -59,14 +79,6 @@ def generate_connectivities(st_graphs: STGraphs):
             print("Key is > 4.. breaking")
             break
 
-    def create_graph_from_path_combo(path_combo:list[int]):
-        G = nx.Graph()
-        for key in path_combo:
-            path = all_paths[key]
-            G.add_edges_from(path)
-
-        return G
-    
     
     connectivity_graphs = [create_graph_from_path_combo(path_combo) for path_combo in all_combinations]
     assert len(connectivity_graphs) == len(all_combinations)
@@ -78,12 +90,13 @@ def generate_connectivities(st_graphs: STGraphs):
     return connectivity_graphs
 
 
+
 # TODO better way of orgranizing intermmediate stuff.. -> general reading + writing @ each stage? w names attatched..
 
 
-def test_generate_connectivites():
-    # T1, T2 = read_rel_graphs()
-    return generate_connectivities(STGraphs.read_rel_graphs())
+# def test_generate_connectivites():
+#     # T1, T2 = read_rel_graphs()
+#     return generate_connectivities(STGraphs.read_rel_graphs())
 
 
 def save_case_and_connectivities(case_name: str, domains: Domains, st_graphs: STGraphs):
@@ -104,7 +117,9 @@ def save_case_and_connectivities(case_name: str, domains: Domains, st_graphs: ST
 
 if __name__ == "__main__":
     print("Running export test")
-    merged_doms, T1, T2 = test_degen_cycle()
+    # merged_doms, T1, T2 = test_degen_cycle()
+    # write_pickle([merged_doms, T1, T2 ], "test_degen_cycle_results_250508")
+    merged_doms, T1, T2 = read_pickle("test_degen_cycle_results_250508")
     save_case_and_connectivities("three_plan", merged_doms, STGraphs(T1, T2))
 
     

@@ -12,7 +12,7 @@ from sympy import Point, Triangle
 from graph2plan.dcel.interfaces import Edge
 from graph2plan.dcel.original import create_line
 
-from .geometry_interfaces import T, VertexPositions
+from graph2plan.helpers.geometry_interfaces import T, VertexPositions
 
 
 @dataclass
@@ -154,5 +154,25 @@ def get_vertex_name(drn: CardinalDirectionEnum):
     return cardinal_directions[drn].vertex_name
 
 
+# def get_drn_from_vertex_name(vertex_name: str):
+#     res = [
+#         cardinal_directions[drn].enum.name
+#         for drn in CardinalDirectionEnum
+#         if cardinal_directions[drn].vertex_name == vertex_name
+#     ]
+#     assert len(res) == 1
+#     return res[0]
+
+def mapping_for_exterior_vertices():
+    return {cardinal_directions[drn].vertex_name:  cardinal_directions[drn].enum.name for drn in CardinalDirectionEnum}
+
+
+
 def get_exterior_names():
     return [cardinal_directions[drn].vertex_name for drn in CardinalDirectionEnum]
+
+
+if __name__ == "__main__":
+    print("Running graph interfaces test")
+    r = mapping_for_exterior_vertices()
+    print(r)

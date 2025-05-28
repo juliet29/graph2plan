@@ -9,7 +9,7 @@ import shapely
 from graph2plan.constants import OUTPUTS_PATH
 
 from ..helpers.geometry_interfaces import ShapelyBounds, T
-from ..helpers.graph_interfaces import Face
+from ..helpers.graph_interfaces import Face, get_exterior_names
 
 
 MarkedNb = NamedTuple("MarkedNb", [("name", str), ("mark", Literal["IN", "OUT"])])
@@ -75,9 +75,9 @@ class Domains:
         return union
     
     def to_floorplan(self):
-        return [dom.bounds.to_room_type(ix, dom.name).to_json() for ix, dom in enumerate(self.domains)]
+        return [[dom.bounds.to_room_type(ix, dom.name).to_json() for ix, dom in enumerate(self.domains) if dom.name not in get_exterior_names()]]
     
-    def write_floorplan(self, output_path:Path=OUTPUTS_PATH, filename="path.json"):
+    def write_floorplan(self, output_path:Path=OUTPUTS_PATH, filename="plan.json"):
         with open(output_path / filename, "w+") as file:
             json.dump(self.to_floorplan(), default=str, fp=file)
             print(f"Saved floorplan to {output_path.parent / output_path.name}") # TODO potentially rich print?

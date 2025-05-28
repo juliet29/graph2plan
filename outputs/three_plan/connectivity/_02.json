@@ -1,10 +1,1 @@
-{
-  "directed": false,
-  "multigraph": false,
-  "graph": {},
-  "nodes": [{ "id": "v_w" }, { "id": "c" }, { "id": "v_e" }],
-  "edges": [
-    { "source": "v_w", "target": "c" },
-    { "source": "c", "target": "v_e" }
-  ]
-}
+{"directed": false, "multigraph": false, "graph": {}, "nodes": [{"id": "WEST"}, {"id": "c"}, {"id": "EAST"}, {"id": "b"}, {"id": "a"}], "edges": [{"source": "WEST", "target": "c"}, {"source": "WEST", "target": "b"}, {"source": "c", "target": "EAST"}, {"source": "EAST", "target": "a"}, {"source": "b", "target": "a"}]}
