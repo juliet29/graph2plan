@@ -1,8 +1,10 @@
 from copy import deepcopy
+from sysconfig import get_path
 
 from networkx import relabel_nodes
+import reprit
 from graph2plan.fourtp.tests import test_degen_cycle
-from graph2plan.helpers.graph_interfaces import CardinalDirectionEnum, mapping_for_exterior_vertices
+from graph2plan.helpers.graph_interfaces import CardinalDirectionEnum, get_vertex_name, mapping_for_exterior_vertices
 from graph2plan.helpers.utils import chain_flatten, get_folder_path, read_pickle, write_pickle
 from graph2plan.dual.interfaces import Domains
 from graph2plan.constants import OUTPUTS_PATH
@@ -10,6 +12,7 @@ import networkx as nx
 from itertools import combinations
 import json
 from graph2plan.rel.rel2 import STGraphs, write_graph
+from rich import print as rprint 
 
 # def merged_domains_to_floorplan(domains: Domains):
 #     domains.write_floorplan(OUTPUTS_PATH) # TODO how to test this?
@@ -59,8 +62,14 @@ def generate_connectivities(st_graphs: STGraphs):
 
 
 
-    T1_source_and_target = (CardinalDirectionEnum.NORTH.name, CardinalDirectionEnum.SOUTH.name)  # TODO encode in graph /
+    T1_source_and_target = (CardinalDirectionEnum.SOUTH.name, CardinalDirectionEnum.NORTH.name)  # TODO encode in graph /
     T2_source_and_target = (CardinalDirectionEnum.WEST.name, CardinalDirectionEnum.EAST.name)
+
+    # T1_source_and_target = (get_vertex_name(CardinalDirectionEnum.SOUTH), get_vertex_name(CardinalDirectionEnum.NORTH))  # TODO encode in graph /
+    # T2_source_and_target = (get_vertex_name(CardinalDirectionEnum.WEST), get_vertex_name(CardinalDirectionEnum.EAST))
+
+    # T1_get_path = get_paths(T1, *T1_source_and_target)
+    # T2_get_path = get_paths(T2, *T2_source_and_target)
 
     all_paths = chain_flatten(
         [
@@ -68,16 +77,23 @@ def generate_connectivities(st_graphs: STGraphs):
             for G, nodes in zip([T1, T2], (T1_source_and_target, T2_source_and_target))
         ]
     )
+    rprint(f"all paths: {all_paths}")
     all_paths = {(ix + 1): path for ix, path in enumerate(all_paths)}
+
 
     all_combinations = []
     for key in all_paths.keys():
         combos = [i for i in combinations(all_paths.keys(), key)]
         all_combinations.extend(combos)
 
+    
+
         if key > 4:
             print("Key is > 4.. breaking")
             break
+
+    
+    rprint(f"all combos: {all_combinations}")
 
     
     connectivity_graphs = [create_graph_from_path_combo(path_combo) for path_combo in all_combinations]
@@ -108,10 +124,11 @@ def save_case_and_connectivities(case_name: str, domains: Domains, st_graphs: ST
     # save connectivity graphs in a folder.. 
     connectivity_folder_path = get_folder_path(folder_path, "connectivity")
     connectivity_graphs = generate_connectivities(st_graphs)
+    rprint(connectivity_graphs)
     for ix, graph in enumerate(connectivity_graphs):
         write_graph(graph, f"_{ix:02}", connectivity_folder_path)
 
-    print(f"Finished saving results for {case_name}")
+    # print(f"Finished saving results for {case_name}")
 
     # 
 

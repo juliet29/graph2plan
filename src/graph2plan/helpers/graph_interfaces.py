@@ -114,6 +114,12 @@ class CardinalDirectionEnum(Enum):
     EAST = 1
     SOUTH = 2
     WEST = 3
+    
+class CardinalDirectionEnum(Enum):
+    NORTH = 0
+    EAST = 1
+    SOUTH = 2
+    WEST = 3
 
 
 class CardinalDirectionData(NamedTuple):
